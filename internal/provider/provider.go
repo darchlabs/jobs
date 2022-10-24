@@ -3,6 +3,7 @@ package provider
 type Provider struct {
 	Name         string
 	NeedsFunding bool
+	Active       bool
 	IsSetup      bool
 	IsWorking    bool
 
