@@ -1,6 +1,6 @@
-package implementations
+package provider
 
-type Implementation struct {
+type Provider struct {
 	Name         string
 	NeedsFunding bool
 	IsSetup      bool

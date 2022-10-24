@@ -1,16 +1,16 @@
 package jobs
 
-import impl "github.com/darchlabs/jobs/internal/implementations"
+import prov "github.com/darchlabs/jobs/internal/provider"
 
 type ImplementationStorage interface {
-	ListImplementations() []*impl.Implementation
-	GetImplementation(implementationName string) (*impl.Implementation, error)
-	AddImplementation(implementation *impl.Implementation) error
-	UpdateImplementation(implementation *impl.Implementation) error
-	DeleteImplementation(implementation *impl.Implementation) error
+	ListImplementations() []*prov.Provider
+	GetImplementation(implementationName string) (*prov.Provider, error)
+	AddImplementation(implementation *prov.Provider) error
+	UpdateImplementation(implementation *prov.Provider) error
+	DeleteImplementation(implementation *prov.Provider) error
 }
 
 type UserJobsStorage interface {
-	GetUsingImplementations(userId string) []*impl.Implementation
+	GetUsingImplementations(userId string) []*prov.Provider
 	GetCurrentContracts(userId string) []string
 }
