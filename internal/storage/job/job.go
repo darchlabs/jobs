@@ -15,10 +15,10 @@ func New(s *storage.S) *Storage {
 }
 
 // TODO(nb): The fields should be an id or the struct?
-
 type JobStorage struct {
-	UserId          string
 	SmartContractId string
+	Event           string
+	UserId          string
 	SynchronizerId  string
 	ProviderId      string
 
