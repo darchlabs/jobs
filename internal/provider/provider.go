@@ -2,7 +2,7 @@ package provider
 
 // Struct for DB
 type Provider struct {
-	Id            string
+	Id            int8
 	Name          string
 	Implemetation Implementation
 }
