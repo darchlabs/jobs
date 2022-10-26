@@ -16,4 +16,6 @@ type ProviderStorage interface {
 type JobStorage interface {
 	GetUsingImplementations(userId string) []*prov.Provider
 	GetCurrentContracts(userId string) []string
+	AddUserProvider(scAddress string, event string, userId string, providerId string) error
+	UpdateUserProvider(scAddress string, providerId string, needsFunding bool, working bool) error
 }
