@@ -3,6 +3,7 @@ package providerstorage
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/darchlabs/jobs/internal/provider"
 	"github.com/darchlabs/jobs/internal/storage"
@@ -64,7 +65,7 @@ func (ps *PS) AddImplementation(p *provider.Provider) error {
 	}
 
 	// Save in database
-	ps.storage.DB.Put([]byte(fmt.Sprintf("%d", p.Id)), b, nil)
+	err = ps.storage.DB.Put([]byte(fmt.Sprintf("%d", p.Id)), b, nil)
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (ps *PS) ListImplementations() []*provider.Provider {
 		err := json.Unmarshal(iter.Value(), &p)
 
 		if err != nil {
-			fmt.Printf("Error while iterating db: %v \n", err)
+			log.Printf("Error while iterating db: %v \n", err)
 			return nil
 		}
 
@@ -91,7 +92,7 @@ func (ps *PS) ListImplementations() []*provider.Provider {
 
 	err := iter.Error()
 	if err != nil {
-		fmt.Printf("Error while iterating db: %v \n", err)
+		log.Printf("Error while iterating db: %v \n", err)
 		return nil
 	}
 
