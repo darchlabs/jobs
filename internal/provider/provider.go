@@ -9,7 +9,7 @@ type Provider struct {
 
 // Interface required for each new implementation
 type Implementation interface {
-	Setup() bool
+	Setup(scAddress string) bool
 	Fund(amount int64) bool
 	GetState(name string) (IsWorking bool, IsSetup bool, NeedsFunding bool)
 }
