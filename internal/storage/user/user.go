@@ -1,6 +1,6 @@
 package userstorage
 
 type UserStorage struct {
-	Id   string
+	Id   int8
 	Name string
 }
