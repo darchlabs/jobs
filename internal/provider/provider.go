@@ -2,7 +2,7 @@ package provider
 
 // Struct for DB
 type Provider struct {
-	Id            int8
+	Id            uint8
 	Name          string
 	Implemetation Implementation
 }
@@ -10,6 +10,6 @@ type Provider struct {
 // Interface required for each new implementation
 type Implementation interface {
 	Setup(scAddress string) bool
-	Fund(amount int64) bool
+	Fund(amount uint64) bool
 	GetState(name string) (IsWorking bool, IsSetup bool, NeedsFunding bool)
 }
