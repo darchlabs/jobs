@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/gofiber/fiber/v2 v2.39.0
 	github.com/syndtr/goleveldb v1.0.0
+	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 )
 
 require (
