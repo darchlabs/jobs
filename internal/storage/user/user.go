@@ -7,6 +7,7 @@ import (
 
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/darchlabs/jobs/internal/user"
+	"github.com/teris-io/shortid"
 )
 
 type US struct {
@@ -19,8 +20,8 @@ func New(s *storage.S) *US {
 	}
 }
 
-func (us *US) GetUser(id int64) (*user.User, error) {
-	data, err := us.storage.DB.Get([]byte(fmt.Sprintf("%d", id)), nil)
+func (us *US) GetUser(id string) (*user.User, error) {
+	data, err := us.storage.DB.Get([]byte(id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -62,36 +63,19 @@ func (us *US) GetUsers() []*user.User {
 }
 
 func (us *US) AddUser(name string) error {
+	// Validate param
 	if name == "" {
 		return fmt.Errorf("%s", "name param string is empty")
 	}
 
-	// Get last id
-	var id int64
-	iter := us.storage.DB.NewIterator(nil, nil)
-
-	for iter.Next() {
-		var user *user.User
-		err := json.Unmarshal(iter.Value(), &user)
-
-		if err != nil {
-			return err
-		}
-
-		// TODO(nb): iteration over leveldb respects the order? The last item iterated is indeed the last inserted?
-		// Get the last id
-		id = user.Id
-
-	}
-	iter.Release()
-
-	err := iter.Error()
+	// Generate new id (the params is for always start with a letter)
+	id, err := shortid.New(1, "-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", 2342)
 	if err != nil {
 		return err
 	}
 
 	u := &user.User{
-		Id:   id,
+		Id:   id.String(),
 		Name: name,
 	}
 
@@ -100,7 +84,7 @@ func (us *US) AddUser(name string) error {
 		return err
 	}
 
-	err = us.storage.DB.Put([]byte(fmt.Sprintf("%d", u.Id)), b, nil)
+	err = us.storage.DB.Put([]byte(u.Id), b, nil)
 	if err != nil {
 		return err
 	}
@@ -108,13 +92,14 @@ func (us *US) AddUser(name string) error {
 	return nil
 }
 
-func (us *US) UpdateUser(id int64, name string) error {
+func (us *US) UpdateUser(id string, name string) error {
+	// Validate param
 	if name == "" {
 		return fmt.Errorf("%s", "name param string is empty")
 	}
 
 	// Validate the user exists
-	data, err := us.storage.DB.Get([]byte(fmt.Sprintf("%d", id)), nil)
+	data, err := us.storage.DB.Get([]byte(id), nil)
 	if err != nil {
 		return err
 	}
@@ -131,7 +116,7 @@ func (us *US) UpdateUser(id int64, name string) error {
 	}
 
 	// Update in DB
-	err = us.storage.DB.Put([]byte(fmt.Sprintf("%d", id)), b, nil)
+	err = us.storage.DB.Put([]byte(id), b, nil)
 	if err != nil {
 		return err
 	}
@@ -139,9 +124,9 @@ func (us *US) UpdateUser(id int64, name string) error {
 	return nil
 }
 
-func (us *US) DeleteUser(id int8) error {
+func (us *US) DeleteUser(id string) error {
 	// Delete user from DB
-	err := us.storage.DB.Delete([]byte(fmt.Sprintf("%d", id)), nil)
+	err := us.storage.DB.Delete([]byte(id), nil)
 	if err != nil {
 		return err
 	}
