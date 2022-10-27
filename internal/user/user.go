@@ -2,15 +2,15 @@ package user
 
 // Struct for DB
 type User struct {
-	Id   int64
+	Id   string
 	Name string
 }
 
 // Interface required for each new implementation
 type UserStorage interface {
-	GetUser(id int64) (*User, error)
+	GetUser(id string) (*User, error)
 	GetUsers() []*User
 	AddUser(name string) error
 	UpdateUser(name string) error
-	DeleteUser(id int64) error
+	DeleteUser(id string) error
 }
