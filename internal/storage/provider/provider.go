@@ -40,21 +40,3 @@ func (ps *PS) List() ([]*provider.Provider, error) {
 
 	return data, nil
 }
-
-func (ps *PS) GetImplementation(id string) (*provider.Provider, error) {
-	// Get the provider by the id key in bytes
-	data, err := ps.storage.DB.Get([]byte(id), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse the bytes to provider struct type
-	var p *provider.Provider
-
-	err = json.Unmarshal(data, &p)
-	if err != nil {
-		return nil, err
-	}
-
-	return p, nil
-}
