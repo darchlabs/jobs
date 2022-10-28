@@ -2,9 +2,9 @@ package provider
 
 // Struct for DB
 type Provider struct {
-	Id       string
-	Name     string
-	Networks []string
+	Id       string   `json:"id"`
+	Name     string   `json:"name"`
+	Networks []string `json:"networks,omitempty"`
 }
 
 // Interface required for each new implementation
