@@ -5,6 +5,8 @@ import (
 	providerstorage "github.com/darchlabs/jobs/internal/storage/provider"
 )
 
+// TODO(nb): Unfollow DRY principle. But don't know which is the best option.
+
 // Interface w methods of rinteracting w providers implementations and the ProviderStorage DB
 type ProviderImplementation interface {
 	AddImplementation(ps *providerstorage.PS, p *provider.Provider) error
