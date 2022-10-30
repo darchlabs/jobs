@@ -4,11 +4,11 @@
 
 - github.com/cagodoy
 - github.com/mtavano
-- github.com/NicoBarragan
+- github.com/nicobarra
 
 ## Definition
 
-Jobs is the generic module that contains different implementations for smart contracts off-chain interactions. 
+Jobs is the generic module that contains different implementations for smart contracts off-chain interactions.
 
 ### Context
 
@@ -24,7 +24,7 @@ Finally, inside this module could be integrated a cloud based solution for the u
 
 ### Diagrams
 
-* Architecture diagram:
+- Architecture diagram:
 
 https://app.diagrams.net/#G1PxvFkkQKAgMXKkp0dnIGnzweYV3uBXMT
 
@@ -33,13 +33,12 @@ https://app.diagrams.net/#G1PxvFkkQKAgMXKkp0dnIGnzweYV3uBXMT
 In the first MVP that will be built by `Darch Labs`, the solution is implemented in the `Golang` programming language.
 The code can be divided in different parts managing different tasks that will be connected between them:
 
-* Interfaces definition for implementations, and integrations for them
+- Interfaces definition for implementations, and integrations for them
 
-* An API for the user (from the fronted) to interact with one of the module actions
+- An API for the user (from the fronted) to interact with one of the module actions
 
-* Read and Write in a DB the Jobs providers implemented available, the smart contracts being used by the user
+- Read and Write in a DB the Jobs providers implemented available, the smart contracts being used by the user
 
-* Write in a DB the state of the jobs providers being used, just like using the `synchronizer V2` for getting the smart contracts interactions and writing it in the DB
+- Write in a DB the state of the jobs providers being used, just like using the `synchronizer V2` for getting the smart contracts interactions and writing it in the DB
 
-* A dashboard that will the DB data in the frontend
-
+- A dashboard that will the DB data in the frontend
