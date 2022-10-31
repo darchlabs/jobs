@@ -1,26 +1,26 @@
 package jobsapi
 
 import (
-	"github.com/darchlabs/jobs/internal/api"
-	"github.com/gofiber/fiber/v2"
+	jobstorage "github.com/darchlabs/jobs/internal/storage/job"
 )
 
-func listJobsHandler(ctx Context) func(c *fiber.Ctx) error {
-	return func(c *fiber.Ctx) error {
-		c.Accepts("application/json")
+type ListJobsHandler struct {
+	storage jobstorage.JS
+}
 
-		// Get elements from db
-		data, err := ctx.JobStorage.List()
-		if err != nil {
-			return c.Status(fiber.StatusConflict).JSON(api.Response{
-				Error: err.Error(),
-			})
-		}
+func NewListJobsHandler(js jobstorage.JS) *ListJobsHandler {
+	return &ListJobsHandler{
+		storage: js,
+	}
+}
 
-		// Prepare response
-		return c.Status(fiber.StatusOK).JSON(api.Response{
-			Data: data,
-		})
+func (ListJobsHandler) Invoke(ctx Context) *HandlerRes {
+	// Get elements from db
+	data, err := ctx.JobStorage.List()
+	if err != nil {
+		return &HandlerRes{err.Error(), 500, err}
 	}
 
+	// Prepare response
+	return &HandlerRes{data, 200, nil}
 }
