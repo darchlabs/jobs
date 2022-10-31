@@ -11,5 +11,8 @@ type Context struct {
 
 func Route(app *fiber.App, ctx Context) {
 	app.Get("/api/v1/jobs", listJobsHandler(ctx))
+<<<<<<< HEAD
 	app.Post("/api/v1/jobs", createJobsHandler(ctx))
+=======
+>>>>>>> nb-feat/list-jobs-endpoint
 }

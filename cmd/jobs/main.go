@@ -16,7 +16,6 @@ import (
 
 func main() {
 	// Get and validate env values
-	// load env values
 	godotenv.Load(".env")
 
 	dbPath := os.Getenv("PATH")
