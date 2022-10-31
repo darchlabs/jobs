@@ -2,9 +2,11 @@ package jobstorage
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/darchlabs/jobs/internal/job"
 	"github.com/darchlabs/jobs/internal/storage"
+	"github.com/teris-io/shortid"
 )
 
 type JS struct {
@@ -38,4 +40,17 @@ func (js *JS) List() ([]*job.Job, error) {
 	}
 
 	return data, nil
+}
+
+func (js *JS) Insert(j *job.Job) (*job.Job, error) {
+	// generate id for database
+	id, err := shortid.Generate()
+	if err != nil {
+		return nil, err
+	}
+
+	j.Id = id
+	j.CreatedAt = time.Now()
+
+	return nil, nil
 }
