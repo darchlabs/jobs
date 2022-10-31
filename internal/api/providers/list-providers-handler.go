@@ -12,12 +12,13 @@ func NewListProvidersHandler(ps providerstorage.PS) *ListProvidersHandler {
 	}
 }
 
-func (ListProvidersHandler) Invoke(ctx Context) *handlerRes {
+func (ListProvidersHandler) Invoke(ctx Context) *HandlerRes {
 	// Get elements from db
 	data, err := ctx.ProviderStorage.List()
 	if err != nil {
-		return &handlerRes{err.Error(), 500, err}
+		return &HandlerRes{err.Error(), 500, err}
 	}
 
-	return &handlerRes{data, 200, nil}
+	// prepare response
+	return &HandlerRes{data, 200, nil}
 }
