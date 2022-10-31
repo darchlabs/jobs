@@ -11,14 +11,14 @@ type Context struct {
 }
 
 // handler's response
-type handlerRes struct {
+type HandlerRes struct {
 	Payload    interface{}
 	HttpStatus int
 	err        error
 }
 
 // Define handler method
-type handler func(ctx Context) *handlerRes
+type handler func(ctx Context) *HandlerRes
 
 func Route(app *fiber.App, ctx Context) {
 	listProvidersHandler := NewListProvidersHandler(ctx.ProviderStorage)
