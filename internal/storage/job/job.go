@@ -49,8 +49,21 @@ func (js *JS) Insert(j *job.Job) (*job.Job, error) {
 		return nil, err
 	}
 
-	j.Id = id
+	j.ID = id
 	j.CreatedAt = time.Now()
+	// TODO(nb): Create a state struct or pattern available for this field
+	j.Status = "idle"
 
-	return nil, nil
+	b, err := json.Marshal(j)
+	if err != nil {
+		return nil, err
+	}
+
+	// save in database
+	err = js.storage.DB.Put([]byte(id), b, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return j, nil
 }
