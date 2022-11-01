@@ -7,6 +7,7 @@ import (
 
 	jobsapi "github.com/darchlabs/jobs/internal/api/jobs"
 	"github.com/darchlabs/jobs/internal/api/providers"
+	providermanager "github.com/darchlabs/jobs/internal/provider/manager"
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -35,13 +36,14 @@ func main() {
 	// Initialize provider and job's storage
 	ps := storage.NewProvider(s)
 	js := storage.NewJob(s)
+	m := providermanager.NewManager(js)
 
 	// Initialize fiber
 	api := fiber.New()
 
 	// Configure routers
 	providers.Route(api, providers.Context{ProviderStorage: *ps})
-	jobsapi.Route(api, jobsapi.Context{JobStorage: *js})
+	jobsapi.Route(api, jobsapi.Context{JobStorage: *js, Manager: m})
 
 	// Run api
 	err = api.Listen(fmt.Sprintf(":%s", port))
