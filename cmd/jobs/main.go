@@ -8,8 +8,6 @@ import (
 	jobsapi "github.com/darchlabs/jobs/internal/api/jobs"
 	"github.com/darchlabs/jobs/internal/api/providers"
 	"github.com/darchlabs/jobs/internal/storage"
-	jobstorage "github.com/darchlabs/jobs/internal/storage/job"
-	providerstorage "github.com/darchlabs/jobs/internal/storage/provider"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -35,8 +33,8 @@ func main() {
 	}
 
 	// Initialize provider and job's storage
-	ps := providerstorage.New(s)
-	js := jobstorage.New(s)
+	ps := storage.NewProvider(s)
+	js := storage.NewJob(s)
 
 	// Initialize fiber
 	api := fiber.New()
