@@ -7,15 +7,14 @@ type Provider struct {
 	Networks []string `json:"networks"`
 }
 
-// TODO(nb): ask ca if he likes this naming or sthing like Creator
 // Interface required for each new implementation
 type Operator interface {
-	Create() error // TODO(nb): define better and implement this for V2
-	Setup(c *Config) bool
-	GetState(name string) (isWorking bool, isSetup bool, needsFunding bool)
+	Setup(c *Config) error
+	GetState(name string) (state State)
 }
 
 type Config struct {
+	Provider     Provider
 	Address      string
 	Abi          string
 	CheckMethod  string
@@ -23,3 +22,14 @@ type Config struct {
 	CheckType    string
 	CheckValue   string
 }
+
+type State string
+
+const (
+	StatusIdle     State = "idle"
+	StatusStarting State = "starting"
+	StatusRunning  State = "running"
+	StatusStopping State = "stopping"
+	StatusStopped  State = "stopped"
+	StatusError    State = "error"
+)
