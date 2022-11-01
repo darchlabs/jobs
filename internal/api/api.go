@@ -5,3 +5,10 @@ type Response struct {
 	Meta  interface{} `json:"meta,omitempty"`
 	Error interface{} `json:"error,omitempty"`
 }
+
+// handler's response
+type HandlerRes struct {
+	Payload    interface{}
+	HttpStatus int
+	Err        error
+}
