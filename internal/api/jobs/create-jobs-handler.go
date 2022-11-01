@@ -2,11 +2,13 @@ package jobsapi
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/darchlabs/jobs/internal/api"
 	"github.com/darchlabs/jobs/internal/job"
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/go-playground/validator"
+	"github.com/robfig/cron"
 )
 
 type CreateJobsHandler struct {
@@ -34,8 +36,26 @@ func (CreateJobsHandler) Invoke(ctx Context) *api.HandlerRes {
 	validate := validator.New()
 	validate.Struct(ctx.JobStorage)
 
+	if body.Job.Type == "cronjob" {
+		// Validate the cronjob received is correct
+		specParser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+		_, err = specParser.Parse(body.Job.Cronjob)
+
+		if err != nil {
+			fmt.Println(err)
+			return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
+		}
+	}
+
 	// Insert job in jobstorage DB
 	j, err := ctx.JobStorage.Insert(body.Job)
+	if err != nil {
+		fmt.Println(err)
+		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
+	}
+
+	// Execute manager in order to execute the job
+	err = ctx.Manager.Create(j)
 	if err != nil {
 		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
 	}
