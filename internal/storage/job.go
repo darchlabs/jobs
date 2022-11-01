@@ -1,36 +1,35 @@
-package jobstorage
+package storage
 
 import (
 	"encoding/json"
 	"time"
 
 	"github.com/darchlabs/jobs/internal/job"
-	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/teris-io/shortid"
 )
 
-type JS struct {
-	storage *storage.S
+type Job struct {
+	storage *S
 }
 
-func New(s *storage.S) *JS {
-	return &JS{
+func NewJob(s *S) *Job {
+	return &Job{
 		storage: s,
 	}
 }
 
-func (js *JS) List() ([]*job.Job, error) {
+func (j *Job) List() ([]*job.Job, error) {
 	data := make([]*job.Job, 0)
 
-	iter := js.storage.DB.NewIterator(nil, nil)
+	iter := j.storage.DB.NewIterator(nil, nil)
 	for iter.Next() {
-		var j *job.Job
-		err := json.Unmarshal(iter.Value(), &j)
+		var jj *job.Job
+		err := json.Unmarshal(iter.Value(), &jj)
 		if err != nil {
 			return nil, err
 		}
 
-		data = append(data, j)
+		data = append(data, jj)
 	}
 	iter.Release()
 
@@ -42,28 +41,28 @@ func (js *JS) List() ([]*job.Job, error) {
 	return data, nil
 }
 
-func (js *JS) Insert(j *job.Job) (*job.Job, error) {
+func (j *Job) Insert(jobInput *job.Job) (*job.Job, error) {
 	// generate id for database
 	id, err := shortid.Generate()
 	if err != nil {
 		return nil, err
 	}
 
-	j.ID = id
-	j.CreatedAt = time.Now()
+	jobInput.ID = id
+	jobInput.CreatedAt = time.Now()
 	// TODO(nb): Create a state struct or pattern available for this field
-	j.Status = "idle"
+	jobInput.Status = "idle"
 
-	b, err := json.Marshal(j)
+	b, err := json.Marshal(jobInput)
 	if err != nil {
 		return nil, err
 	}
 
 	// save in database
-	err = js.storage.DB.Put([]byte(id), b, nil)
+	err = j.storage.DB.Put([]byte(id), b, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return j, nil
+	return jobInput, nil
 }
