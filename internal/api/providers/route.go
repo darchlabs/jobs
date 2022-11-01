@@ -2,23 +2,16 @@ package providers
 
 import (
 	"github.com/darchlabs/jobs/internal/api"
-	providerstorage "github.com/darchlabs/jobs/internal/storage/provider"
+	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/gofiber/fiber/v2"
 )
 
 type Context struct {
-	ProviderStorage providerstorage.PS
-}
-
-// handler's response
-type HandlerRes struct {
-	Payload    interface{}
-	HttpStatus int
-	err        error
+	ProviderStorage storage.Provider
 }
 
 // Define handler method
-type handler func(ctx Context) *HandlerRes
+type handler func(ctx Context) *api.HandlerRes
 
 func Route(app *fiber.App, ctx Context) {
 	listProvidersHandler := NewListProvidersHandler(ctx.ProviderStorage)
@@ -34,11 +27,10 @@ func HandleFunc(fn handler, ctx Context) func(c *fiber.Ctx) error {
 
 		// Exec handler func and get its response
 		handlerRes := fn(ctx)
-		payload, statusCode, err := handlerRes.Payload, handlerRes.HttpStatus, handlerRes.err
+		payload, statusCode, err := handlerRes.Payload, handlerRes.HttpStatus, handlerRes.Err
 		if err != nil {
 			return c.Status(fiber.StatusConflict).JSON(api.Response{
 				Error: err,
-				Data:  payload,
 			})
 		}
 
