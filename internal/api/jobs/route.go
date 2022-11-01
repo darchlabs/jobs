@@ -27,6 +27,7 @@ func HandleFunc(fn handler, ctx Context) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		// set headers
 		c.Accepts("application/json")
+
 		// Exec handler func and get its response
 		ctx.c = c
 		handlerRes := fn(ctx)
