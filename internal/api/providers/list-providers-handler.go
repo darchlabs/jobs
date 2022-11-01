@@ -1,24 +1,27 @@
 package providers
 
-import providerstorage "github.com/darchlabs/jobs/internal/storage/provider"
+import (
+	"github.com/darchlabs/jobs/internal/api"
+	"github.com/darchlabs/jobs/internal/storage"
+)
 
 type ListProvidersHandler struct {
-	storage providerstorage.PS
+	storage storage.Provider
 }
 
-func NewListProvidersHandler(ps providerstorage.PS) *ListProvidersHandler {
+func NewListProvidersHandler(ps storage.Provider) *ListProvidersHandler {
 	return &ListProvidersHandler{
 		storage: ps,
 	}
 }
 
-func (ListProvidersHandler) Invoke(ctx Context) *HandlerRes {
+func (ListProvidersHandler) Invoke(ctx Context) *api.HandlerRes {
 	// Get elements from db
 	data, err := ctx.ProviderStorage.List()
 	if err != nil {
-		return &HandlerRes{err.Error(), 500, err}
+		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
 	}
 
 	// prepare response
-	return &HandlerRes{data, 200, nil}
+	return &api.HandlerRes{Payload: data, HttpStatus: 200, Err: nil}
 }
