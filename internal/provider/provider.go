@@ -9,10 +9,17 @@ type Provider struct {
 
 // Interface required for each new implementation
 type Operator interface {
+<<<<<<< HEAD
 	Setup(c *Config) error
 	GetState(name string) (state State)
+=======
+	Create() error // TODO(nb): define better and implement this
+	Setup(c *Config) bool
+	GetState(name string) (isWorking bool, isSetup bool, needsFunding bool)
+>>>>>>> nb-feat/create-jobs-endpoint
 }
 
+// Config struct for setup
 type Config struct {
 	Provider     Provider
 	Address      string

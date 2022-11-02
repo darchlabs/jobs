@@ -34,7 +34,6 @@ func main() {
 	}
 
 	// Initialize provider and job's storage
-	ps := storage.NewProvider(s)
 	js := storage.NewJob(s)
 	m := providermanager.NewManager(js)
 
@@ -42,8 +41,13 @@ func main() {
 	api := fiber.New()
 
 	// Configure routers
+<<<<<<< HEAD
 	providers.Route(api, providers.Context{ProviderStorage: *ps})
 	jobsapi.Route(api, jobsapi.Context{JobStorage: *js, Manager: m})
+=======
+	providers.Route(api)
+	jobsapi.Route(api, jobsapi.Context{JobStorage: *js})
+>>>>>>> nb-feat/create-jobs-endpoint
 
 	// Run api
 	err = api.Listen(fmt.Sprintf(":%s", port))
