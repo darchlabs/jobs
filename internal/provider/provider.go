@@ -13,6 +13,7 @@ type Operator interface {
 	GetState(name string) (state State)
 }
 
+// Config struct for setup
 type Config struct {
 	Provider     Provider
 	Address      string

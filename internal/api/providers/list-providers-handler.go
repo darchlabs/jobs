@@ -2,26 +2,43 @@ package providers
 
 import (
 	"github.com/darchlabs/jobs/internal/api"
-	"github.com/darchlabs/jobs/internal/storage"
+	"github.com/darchlabs/jobs/internal/provider"
 )
 
 type ListProvidersHandler struct {
-	storage storage.Provider
+	providers []provider.Provider
 }
 
-func NewListProvidersHandler(ps storage.Provider) *ListProvidersHandler {
+func NewListProvidersHandler() *ListProvidersHandler {
+	providers := make([]provider.Provider, 0)
+	dlNetworks := make([]string, 0)
+	chainlinkNetworks := make([]string, 0)
+
+	dlNetworks = append(dlNetworks, "ethereum", "matic", "bnb", "avalanche", "goerli")
+	chainlinkNetworks = append(chainlinkNetworks, "ethereum", "matic", "bnb", "avalanche", "fantom")
+
+	dlKeepers := provider.Provider{
+		ID:       "1",
+		Name:     "Darch Labs Keepers",
+		Networks: dlNetworks,
+	}
+	chainlinkKeepers := provider.Provider{
+		ID:       "2",
+		Name:     "Chainlink Keepers",
+		Networks: chainlinkNetworks,
+	}
+
+	providers = append(providers, dlKeepers, chainlinkKeepers)
+
 	return &ListProvidersHandler{
-		storage: ps,
+		providers: providers,
 	}
 }
 
-func (ListProvidersHandler) Invoke(ctx Context) *api.HandlerRes {
-	// Get elements from db
-	data, err := ctx.ProviderStorage.List()
-	if err != nil {
-		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
-	}
+func (lp *ListProvidersHandler) Invoke() *api.HandlerRes {
+	// Get providers
+	providers := lp.providers
 
 	// prepare response
-	return &api.HandlerRes{Payload: data, HttpStatus: 200, Err: nil}
+	return &api.HandlerRes{Payload: providers, HttpStatus: 200, Err: nil}
 }
