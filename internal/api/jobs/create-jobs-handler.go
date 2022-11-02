@@ -45,18 +45,18 @@ func (CreateJobsHandler) Invoke(ctx Context) *api.HandlerRes {
 			fmt.Println(err)
 			return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
 		}
+
+		// Execute manager in order to execute the job
+		err = ctx.Manager.Create(body.Job)
+		if err != nil {
+			return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
+		}
 	}
 
 	// Insert job in jobstorage DB
 	j, err := ctx.JobStorage.Insert(body.Job)
 	if err != nil {
 		fmt.Println(err)
-		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
-	}
-
-	// Execute manager in order to execute the job
-	err = ctx.Manager.Create(j)
-	if err != nil {
 		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
 	}
 
