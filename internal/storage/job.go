@@ -66,3 +66,20 @@ func (j *Job) Insert(jobInput *job.Job) (*job.Job, error) {
 
 	return jobInput, nil
 }
+
+func (j *Job) Update(jobInput *job.Job) (*job.Job, error) {
+	jobInput.UpdatedAt = time.Now()
+
+	b, err := json.Marshal(jobInput)
+	if err != nil {
+		return nil, err
+	}
+
+	// save in database
+	err = j.storage.DB.Put([]byte(jobInput.ID), b, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobInput, nil
+}
