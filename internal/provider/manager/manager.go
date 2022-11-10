@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	jobsabi "github.com/darchlabs/jobs/abi"
 	"github.com/darchlabs/jobs/internal/job"
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/robfig/cron"
@@ -51,6 +52,31 @@ func NewManager(js *storage.Job, client *ethclient.Client, pk string) *M {
 	return m
 }
 
+// TODO(nb): Move to another file
+// Method for calling the smart contract view function with bool return
+func (m *M) Call(opts *bind.CallOpts, contract *bind.BoundContract, j *job.Job) (*bool, error) {
+	var out []interface{}
+
+	abiConn, err := jobsabi.NewAbi(common.HexToAddress(j.Address), m.client)
+
+	fmt.Println(1)
+	abiTwo := jobsabi.AbiRaw{Contract: abiConn}
+	m.checkAndStop(err, j)
+
+	fmt.Println(2)
+	err = abiTwo.Call(opts, &out, *j.CheckMethod)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(3)
+	fmt.Println("out: ", out)
+	out0 := out[0].(bool)
+	fmt.Println("out0: ", out0)
+
+	return &out0, err
+}
+
 func (m *M) Create(j *job.Job) error {
 	var err error
 
@@ -72,6 +98,7 @@ func (m *M) createCronjob(j *job.Job) error {
 	fmt.Println("Entered")
 	err := m.cron.AddFunc(j.Cronjob, func() {
 		execute := true
+		fmt.Println(execute)
 
 		fmt.Println("I'm here!")
 
@@ -106,7 +133,7 @@ func (m *M) createCronjob(j *job.Job) error {
 
 		fmt.Println("parsedAbi.Methods", parsedAbi.Methods)
 		fmt.Println("Getting contract...")
-		contract, err := GetContract(j.Address, parsedAbi, m.client)
+		contract := GetContract(j.Address, parsedAbi, m.client)
 		m.checkAndStop(err, j)
 
 		actionMethod := fmt.Sprintf("%s", parsedAbi.Methods[j.ActionMethod])
@@ -122,26 +149,13 @@ func (m *M) createCronjob(j *job.Job) error {
 				err = fmt.Errorf("there is no %s method inside the contract abi", checkMethod)
 				m.checkAndStop(err, j)
 			}
-
 			fmt.Println("checkMethod: ", checkMethod)
 
 			fmt.Println("Checking method...")
-			// Create results interface array for appending the result of the sc view function on it
-			var results []interface{}
-
-			fmt.Println("Calling view method...")
-			// Call the view function and get its boolean response
-			err = contract.contractCaller.Call(&bind.CallOpts{}, &results, *j.CheckMethod, nil)
+			res, err := m.Call(&bind.CallOpts{}, contract, j)
 			m.checkAndStop(err, j)
 
-			fmt.Println("results: ", results)
-
-			fmt.Println("Getting out ...")
-			out := abi.ConvertType(results[0], new(*bool))
-
-			fmt.Println("out: ", out)
-
-			// TODO(nb): check the response
+			execute = *res
 		}
 
 		fmt.Println("execute: ", execute)
@@ -150,11 +164,12 @@ func (m *M) createCronjob(j *job.Job) error {
 		// Execute action method and see return
 		if execute && err == nil {
 			fmt.Println("1")
+			// TODO(nb): Create method for doing a tx on the method
 			// var params interface{}
-			tx, err := contract.contractTransactor.Transact(&bind.TransactOpts{From: signer.From, Signer: signer.Signer}, j.ActionMethod, nil)
+			// tx, err := contract.contractTransactor.Transact(&bind.TransactOpts{From: signer.From, Signer: signer.Signer}, j.ActionMethod, nil)
 			m.checkAndStop(err, j)
 
-			fmt.Println("tx: ", tx)
+			// fmt.Println("tx: ", tx)
 		}
 	})
 
