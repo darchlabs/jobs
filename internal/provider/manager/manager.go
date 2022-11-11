@@ -54,13 +54,13 @@ func NewManager(js *storage.Job, client *ethclient.Client, pk string) *M {
 
 // TODO(nb): Move to another file
 // Method for calling the smart contract view function with bool return
-func (m *M) Call(opts *bind.CallOpts, contract *bind.BoundContract, j *job.Job) (*bool, error) {
+func (m *M) Call(j *job.Job, contract *bind.BoundContract, opts *bind.CallOpts) (*bool, error) {
 	var out []interface{}
 
 	abiConn, err := jobsabi.NewAbi(common.HexToAddress(j.Address), m.client)
 
 	fmt.Println(1)
-	abiTwo := jobsabi.AbiRaw{Contract: abiConn}
+	abiTwo := jobsabi.AbiCallerRaw{Contract: &abiConn.AbiCaller}
 	m.checkAndStop(err, j)
 
 	fmt.Println(2)
@@ -75,6 +75,52 @@ func (m *M) Call(opts *bind.CallOpts, contract *bind.BoundContract, j *job.Job) 
 	fmt.Println("out0: ", out0)
 
 	return &out0, err
+}
+
+// TODO(nb): Move to another file independently of Manager
+// Method for calling the smart contract view function with bool return
+func (m *M) Perform(j *job.Job, contract *bind.BoundContract, opts *bind.TransactOpts, params interface{}) error {
+	abiConn, err := jobsabi.NewAbi(common.HexToAddress(j.Address), m.client)
+	fmt.Println(1)
+
+	// abiTwo := jobsabi.AbiRaw{Contract: abiConn}
+
+	// abiFive := jobsabi.AbiCallerRaw{Contract: &abiConn.AbiCaller}
+
+	abiThree := jobsabi.AbiTransactorRaw{Contract: &abiConn.AbiTransactor}
+	m.checkAndStop(err, j)
+	fmt.Println(2)
+
+	fmt.Println(params)
+	fmt.Println("params: ", params)
+	// fmt.Printf("len(params): %d", params...)
+
+	var a []*interface{}
+	a = append(a, nil)
+
+	fmt.Println("a: ", a)
+	fmt.Println("len(a): ", len(a))
+
+	if params == nil {
+		tx, err := abiThree.Transact(opts, j.ActionMethod)
+		if err != nil {
+			return err
+		}
+		fmt.Println(3)
+		fmt.Println("tx: ", tx)
+		return nil
+	}
+
+	tx, err := abiThree.Transact(opts, j.ActionMethod, params)
+	fmt.Println("tx: ", tx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(3)
+	fmt.Println("tx: ", tx)
+
+	return nil
 }
 
 func (m *M) Create(j *job.Job) error {
@@ -152,7 +198,7 @@ func (m *M) createCronjob(j *job.Job) error {
 			fmt.Println("checkMethod: ", checkMethod)
 
 			fmt.Println("Checking method...")
-			res, err := m.Call(&bind.CallOpts{}, contract, j)
+			res, err := m.Call(j, contract, &bind.CallOpts{})
 			m.checkAndStop(err, j)
 
 			execute = *res
@@ -164,12 +210,33 @@ func (m *M) createCronjob(j *job.Job) error {
 		// Execute action method and see return
 		if execute && err == nil {
 			fmt.Println("1")
-			// TODO(nb): Create method for doing a tx on the method
-			// var params interface{}
-			// tx, err := contract.contractTransactor.Transact(&bind.TransactOpts{From: signer.From, Signer: signer.Signer}, j.ActionMethod, nil)
+			fmt.Println("aa: ", parsedAbi.Methods[j.ActionMethod])
+
+			// Keep printing signer
+			fmt.Println("signer.From: ", signer.From)
+			fmt.Println("signer.Nonce: ", signer.Nonce)
+			fmt.Println("signer.Signer: ", signer.Signer)
+			fmt.Println("signer.Value: ", signer.Value)
+			fmt.Println("GasPrice:  ", signer.GasPrice)
+			fmt.Println("GasFeeCap: ", signer.GasFeeCap)
+			fmt.Println("GasTipCap: ", signer.GasTipCap)
+			fmt.Println("GasLimit:  ", signer.GasLimit)
+
+			fmt.Println("Performing tx...")
+			err = m.Perform(j, contract, &bind.TransactOpts{
+				From:      signer.From,
+				Nonce:     signer.Nonce,
+				Signer:    signer.Signer,
+				Value:     signer.Value,
+				GasPrice:  signer.GasPrice,
+				GasFeeCap: signer.GasFeeCap,
+				GasTipCap: signer.GasTipCap,
+				GasLimit:  signer.GasLimit,
+				Context:   nil,
+				NoSend:    false,
+			}, nil)
 			m.checkAndStop(err, j)
 
-			// fmt.Println("tx: ", tx)
 		}
 	})
 
