@@ -6,7 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/gofiber/fiber/v2 v2.39.0
-	github.com/joho/godotenv v1.4.0
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/robfig/cron v1.2.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
