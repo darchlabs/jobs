@@ -3,66 +3,52 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	jobsapi "github.com/darchlabs/jobs/internal/api/jobs"
 	"github.com/darchlabs/jobs/internal/api/providers"
+	"github.com/darchlabs/jobs/internal/config"
 	providermanager "github.com/darchlabs/jobs/internal/provider/manager"
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 )
 
 func main() {
-	// Get and validate env values
-	godotenv.Load(".env")
+	log.Println("Starting jobs")
 
-	dbPath := os.Getenv("PATH")
-	if dbPath == "" {
-		log.Fatal("Invalid DB filepath")
-	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("Invalid port")
-	}
-
-	clientUrl := os.Getenv("URL")
-	if clientUrl == "" {
-		log.Fatal("Invalid URL")
-	}
-
-	privateKey := os.Getenv("PRIVATE_KEY")
-	if clientUrl == "" {
-		log.Fatal("Invalid PRIVATE_KEY")
+	// read env values
+	var conf config.Config
+	err := envconfig.Process("", &conf)
+	if err != nil {
+		log.Fatal("invalid env values")
 	}
 
 	// Initialize storage
-	s, err := storage.New(dbPath)
+	s, err := storage.New(conf.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Instance job's storage and client
 	js := storage.NewJob(s)
-	client, err := ethclient.Dial(clientUrl)
+	client, err := ethclient.Dial(conf.NodeURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Initialize manager with its params
-	m := providermanager.NewManager(js, client, privateKey)
+	m := providermanager.NewManager(js, client, conf.PrivateKey)
 
 	// Initialize fiber
 	api := fiber.New()
 
 	// Configure routers
 	providers.Route(api)
-	jobsapi.Route(api, jobsapi.Context{JobStorage: *js, Manager: m})
+	jobsapi.Route(api, jobsapi.Context{JobStorage: js, Manager: m})
 
 	// Run api
-	err = api.Listen(fmt.Sprintf(":%s", port))
+	err = api.Listen(fmt.Sprintf(":%s", conf.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
