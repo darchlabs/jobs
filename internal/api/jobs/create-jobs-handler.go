@@ -12,10 +12,10 @@ import (
 )
 
 type CreateJobsHandler struct {
-	storage storage.Job
+	storage *storage.Job
 }
 
-func NewCreateJobsHandler(js storage.Job) *CreateJobsHandler {
+func NewCreateJobsHandler(js *storage.Job) *CreateJobsHandler {
 	return &CreateJobsHandler{
 		storage: js,
 	}
