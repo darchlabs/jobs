@@ -8,7 +8,7 @@ import (
 )
 
 type Context struct {
-	JobStorage storage.Job
+	JobStorage *storage.Job
 	Manager    providermanager.Manager
 	c          *fiber.Ctx
 }
