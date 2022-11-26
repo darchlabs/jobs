@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  jobs:
+    build: .
+    env_file: .env
+
+    ports:
+      - "2995-3000:3000"
+    # volume:
