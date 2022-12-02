@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jobs-pod
+  labels:
+    app: jobs-app
+spec:
+  containers:
+    - name: jobs
+      image: nicobarragan/jobs:v1
+      envFrom:
+        - configMapRef:
+            name: jobs-configmap
