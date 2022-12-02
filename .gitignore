@@ -3,3 +3,4 @@ bin
 *.db
 opt
 abi/
+jobs-configmap.yaml
