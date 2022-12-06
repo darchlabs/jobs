@@ -36,7 +36,8 @@ func HandleFunc(fn handler, ctx Context) func(c *fiber.Ctx) error {
 		payload, statusCode, err := handlerRes.Payload, handlerRes.HttpStatus, handlerRes.Err
 		if err != nil {
 			return c.Status(fiber.StatusConflict).JSON(api.Response{
-				// TODO(nb): This returns an empty error
+				Data:  payload,
+				Meta:  statusCode,
 				Error: err,
 			})
 		}
