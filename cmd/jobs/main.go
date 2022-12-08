@@ -21,7 +21,7 @@ func main() {
 	var conf config.Config
 	err := envconfig.Process("", &conf)
 	if err != nil {
-		log.Fatal("invalid env values")
+		log.Fatal("invalid env values: ", err)
 	}
 
 	// Initialize storage
