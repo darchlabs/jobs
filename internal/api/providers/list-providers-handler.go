@@ -15,7 +15,6 @@ func NewListProvidersHandler() *ListProvidersHandler {
 	chainlinkNetworks := make([]string, 0)
 
 	dlNetworks = append(dlNetworks, "ethereum", "goerli")
-	chainlinkNetworks = append(chainlinkNetworks)
 
 	dlKeepers := provider.Provider{
 		ID:       "1",
