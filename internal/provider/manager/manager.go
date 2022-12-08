@@ -65,8 +65,14 @@ func (m *M) Create(job *job.Job) error {
 		cron := cron.New()
 		cronjob := NewCronjob(m, cron)
 
-		// TODO(nb): Implement goroutine here?
-		err = cronjob.SetupAndRun(job)
+		// Check if the inputs for the cron are right
+		cronCTX, err := cronjob.Check(job)
+		if err != nil {
+			return err
+		}
+
+		// Setup, add and run cronjob
+		err = cronjob.SetupAndRun(job, cronCTX)
 		if err != nil {
 			return err
 		}
