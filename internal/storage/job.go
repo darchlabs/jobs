@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/darchlabs/jobs/internal/job"
+	"github.com/darchlabs/jobs/internal/provider"
 	"github.com/teris-io/shortid"
 )
 
@@ -41,6 +42,21 @@ func (j *Job) List() ([]*job.Job, error) {
 	return data, nil
 }
 
+func (j *Job) GetById(id string) (*job.Job, error) {
+	data, err := j.storage.DB.Get([]byte(id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var job *job.Job
+	err = json.Unmarshal(data, &job)
+	if err != nil {
+		return nil, err
+	}
+
+	return job, nil
+}
+
 func (j *Job) Insert(jobInput *job.Job) (*job.Job, error) {
 	// generate id for database
 	id, err := shortid.Generate()
@@ -50,8 +66,7 @@ func (j *Job) Insert(jobInput *job.Job) (*job.Job, error) {
 
 	jobInput.ID = id
 	jobInput.CreatedAt = time.Now()
-	// TODO(nb): Create a state struct or pattern available for this field
-	jobInput.Status = "idle"
+	jobInput.Status = string(provider.StatusIdle)
 
 	b, err := json.Marshal(jobInput)
 	if err != nil {
