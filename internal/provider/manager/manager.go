@@ -5,6 +5,7 @@ package providermanager
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -72,11 +73,30 @@ func (m *M) Create(job *job.Job) error {
 		}
 
 		// Setup, add and run cronjob
-		err = cronjob.SetupAndRun(job, cronCTX)
-		if err != nil {
-			return err
+		var wg sync.WaitGroup
+		// Add a goroutine to the wait group
+		wg.Add(1)
+
+		// Create chan for communicating the error logs between the goroutines
+		cronRes := make(chan error)
+		go func() {
+			cronjob.Setup(job, cronCTX, &wg, cronRes)
+			cronjob.Run(&wg, cronRes)
+		}()
+
+		// Wait until the wait group's goroutines are 0
+		wg.Wait()
+
+		// Get the chan response and check if there is an error
+		chanErr := <-cronRes
+		if chanErr != nil {
+			fmt.Println("Stopping cronjob due to an error: ", chanErr)
+			cronjob.cron.Stop()
+			fmt.Println("Cron stopped!")
+			return chanErr
 		}
 
+		fmt.Println("Here!")
 		return nil
 	}
 
