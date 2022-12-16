@@ -22,6 +22,7 @@ type Implementation interface {
 type Manager interface {
 	Setup(job *job.Job) error
 	Start(id string)
+	Stop(id string)
 	StartCurrentJobs()
 }
 
@@ -89,9 +90,18 @@ func (m *M) Setup(job *job.Job) error {
 
 func (m *M) Start(id string) {
 	c := m.CronMap[id]
+
 	fmt.Println("Starting cron: ", id)
 	c.Start()
-	fmt.Println("Cron started!", id)
+	fmt.Println("Cron started!")
+}
+
+func (m *M) Stop(id string) {
+	c := m.CronMap[id]
+
+	fmt.Println("Stopping cron: ", id)
+	c.Stop()
+	fmt.Println("Cron stopped!")
 }
 
 func setupAllJobs(m *M, jobs []*job.Job) {
