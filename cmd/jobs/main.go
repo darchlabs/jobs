@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	jobsapi "github.com/darchlabs/jobs/internal/api/jobs"
 	"github.com/darchlabs/jobs/internal/api/providers"
@@ -12,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/robfig/cron"
 )
 
 func main() {
@@ -56,4 +60,35 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Manage shutdowns correctly
+	quit := make(chan struct{})
+	listenInterrupt(quit)
+	<-quit
+	gracefullShutdown(m.CronMap, m.Jobstorage)
+}
+
+// listenInterrupt method used to listen SIGTERM OS Signal
+func listenInterrupt(quit chan struct{}) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		s := <-c
+		fmt.Println("Signal received", s.String())
+		quit <- struct{}{}
+	}()
+}
+
+// gracefullShutdown method used to close all synchronizer processes
+func gracefullShutdown(cronMap map[string]*cron.Cron, js *storage.Job) {
+	// stop all cronjob tickers
+	for _, c := range cronMap {
+		c.Stop()
+	}
+
+	// close database connection
+	err := js.Stop()
+	if err != nil {
+		log.Println(err)
+	}
 }
