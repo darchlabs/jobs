@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/darchlabs/jobs/internal/job"
+	"github.com/darchlabs/jobs/internal/provider"
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/robfig/cron"
 )
@@ -54,9 +55,19 @@ func (m *M) StartCurrentJobs() {
 		log.Fatal("cannot get current jobs in the storage")
 	}
 
-	setupAllJobs(m, currentJobs)
+	for _, job := range currentJobs {
+		if job.Status != provider.StatusRunning {
+			continue
+		}
 
-	startAllJobs(m.CronMap)
+		err := m.Setup(job)
+		if err != nil {
+			fmt.Printf("Error while setting up %s job\n", job.ID)
+			continue
+		}
+
+		m.Start(job.ID)
+	}
 }
 
 // Method for creating a new manager provider
@@ -102,23 +113,4 @@ func (m *M) Stop(id string) {
 	fmt.Println("Stopping cron: ", id)
 	c.Stop()
 	fmt.Println("Cron stopped!")
-}
-
-func setupAllJobs(m *M, jobs []*job.Job) {
-	// Iterate jobs and Setup them for if there were jobs running, sthing failed and is needed to be reloaded
-	for _, job := range jobs {
-		fmt.Println(job.ID)
-		err := m.Setup(job)
-		if err != nil {
-			log.Fatalf("Error while starting '%s' job", job.ID)
-		}
-	}
-}
-
-func startAllJobs(cronMap map[string]*cron.Cron) {
-	for id, c := range cronMap {
-		fmt.Println("starting: ", id)
-		c.Start()
-		fmt.Println("started! ", id)
-	}
 }
