@@ -47,9 +47,13 @@ func main() {
 	providers.Route(api)
 	jobsapi.Route(api, jobsapi.Context{JobStorage: js, Manager: m})
 
+	// Start already created jobs
+	go m.StartCurrentJobs()
+
 	// Run api
 	err = api.Listen(fmt.Sprintf(":%s", conf.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }
