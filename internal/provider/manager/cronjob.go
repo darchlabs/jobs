@@ -202,7 +202,7 @@ func stopJobOnError(job *job.Job, log string, stop chan bool, s *storage.Job) {
 // Method for stopping cronjob when an error is occurred
 func updateJob(s *storage.Job, j *job.Job, errorLog string) {
 	// Update the status of the job on the storage
-	j.Status = string(provider.StatusError)
+	j.Status = provider.StatusError
 
 	// Update the logs field with the error msg
 	j.Logs = &errorLog
