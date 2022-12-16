@@ -19,9 +19,11 @@ type handler func(ctx Context) *api.HandlerRes
 func Route(app *fiber.App, ctx Context) {
 	listJobsHandler := NewListJobsHandler(ctx.JobStorage)
 	createJobsHandler := NewCreateJobsHandler(ctx.JobStorage)
+	stopJobHandler := NewStopJobHandler(ctx.JobStorage)
 
 	app.Get("/api/v1/jobs", HandleFunc(listJobsHandler.Invoke, ctx))
 	app.Post("/api/v1/jobs", HandleFunc(createJobsHandler.Invoke, ctx))
+	app.Post("/api/v1/jobs/:id/stop", HandleFunc(stopJobHandler.Invoke, ctx))
 }
 
 // Func that receives the returns from handlers and creates an http response
