@@ -32,25 +32,30 @@ type M struct {
 }
 
 func NewManager(js *storage.Job, client *ethclient.Client, pk string) *M {
-	// get jobs from db
-	currentJobs, err := js.List()
-	if err != nil {
-		// Used log fatal 'cause returning a nil could produce unexpected behaviours
-		log.Fatal("cannot get current jobs in the storage")
-	}
-
 	m := &M{
 		jobstorage: js,
 		client:     client,
 		privateKey: pk,
 	}
 
-	// Iterate jobs and create them for if there were jobs running, sthing failed and is needed to be reloaded
-	for _, job := range currentJobs {
-		m.Create(job)
+	return m
+}
+
+func (m *M) StartCurrentJobs() {
+	// get jobs from db
+	currentJobs, err := m.jobstorage.List()
+	if err != nil {
+		// Used log fatal 'cause returning a nil could produce unexpected behaviours
+		log.Fatal("cannot get current jobs in the storage")
 	}
 
-	return m
+	// Iterate jobs and create them for if there were jobs running, sthing failed and is needed to be reloaded
+	for _, job := range currentJobs {
+		err = m.Create(job)
+		if err != nil {
+			log.Fatalf("Error while starting '%s' job", job.ID)
+		}
+	}
 }
 
 // Method for creating a new manager provider
