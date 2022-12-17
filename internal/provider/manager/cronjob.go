@@ -19,7 +19,6 @@ import (
 type Cronjob struct {
 	cron       *cron.Cron
 	jobstorage *storage.Job
-	client     *ethclient.Client
 	pk         string
 }
 
@@ -27,7 +26,6 @@ func NewCronjob(ctx *M, cron *cron.Cron) *Cronjob {
 	return &Cronjob{
 		cron:       cron,
 		jobstorage: ctx.Jobstorage,
-		client:     ctx.client,
 		pk:         ctx.privateKey,
 	}
 }
@@ -37,6 +35,7 @@ type cronCTX struct {
 	signer   *bind.TransactOpts
 	abi      abi.ABI
 	contract *bind.BoundContract
+	client   *ethclient.Client
 }
 
 // Func for asserting that the data is ok, and returning the needed context for the cronjob
@@ -55,8 +54,13 @@ func (cj *Cronjob) Check(job *job.Job) (*cronCTX, error) {
 	}
 	fmt.Println("Network obtained!")
 
+	client, err := ethclient.Dial(job.Client)
+	if err != nil {
+		return nil, err
+	}
+
 	fmt.Println("Getting signer...")
-	signer, err = sc.GetSigner(cj.pk, *cj.client, chainId, nil, nil)
+	signer, err = sc.GetSigner(cj.pk, *client, chainId, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +75,7 @@ func (cj *Cronjob) Check(job *job.Job) (*cronCTX, error) {
 	fmt.Println("Abi parsed!")
 
 	// Check that the address indeed is deployed on the network
-	contractCode, err := cj.client.PendingCodeAt(context.Background(), common.HexToAddress(job.Address))
+	contractCode, err := client.PendingCodeAt(context.Background(), common.HexToAddress(job.Address))
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +85,7 @@ func (cj *Cronjob) Check(job *job.Job) (*cronCTX, error) {
 	}
 
 	fmt.Println("Getting contract...")
-	contract = sc.GetContract(job.Address, parsedAbi, cj.client)
+	contract = sc.GetContract(job.Address, parsedAbi, client)
 
 	if contract == nil {
 		return nil, fmt.Errorf("there is no contract under the %s address and abi on the %s network", job.Address, job.Network)
@@ -110,6 +114,7 @@ func (cj *Cronjob) Check(job *job.Job) (*cronCTX, error) {
 		signer:   signer,
 		abi:      parsedAbi,
 		contract: contract,
+		client:   client,
 	}, err
 }
 
@@ -132,7 +137,7 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 		if job.CheckMethod != nil {
 			// Check if the response of the smart contract view function for the cronjob to know if it must perform actionMethod or not
 			fmt.Println("Checking method...")
-			res, err := sc.Call(ctx.contract, cj.client, job.Address, *job.CheckMethod, &bind.CallOpts{})
+			res, err := sc.Call(ctx.contract, ctx.client, job.Address, *job.CheckMethod, &bind.CallOpts{})
 			if err != nil {
 				log = fmt.Sprintf("Error while trying to call checkMethod: %v", err)
 
@@ -154,7 +159,7 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 		// perform action method and see return if it is needed
 		if perform && err == nil {
 			fmt.Println("Performing tx...")
-			tx, err := sc.Perform(ctx.contract, cj.client, job.Address, job.ActionMethod, &bind.TransactOpts{
+			tx, err := sc.Perform(ctx.contract, ctx.client, job.Address, job.ActionMethod, &bind.TransactOpts{
 				From:     ctx.signer.From,
 				Signer:   ctx.signer.Signer,
 				GasLimit: ctx.signer.GasLimit,
