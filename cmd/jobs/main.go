@@ -64,8 +64,8 @@ func main() {
 	quit := make(chan struct{})
 	listenInterrupt(quit)
 	<-quit
-	gracefullShutdown(m.CronMap, m.Jobstorage)
-}
+	gracefullShutdown(m)
+
 
 // listenInterrupt method used to listen SIGTERM OS Signal
 func listenInterrupt(quit chan struct{}) {
@@ -80,14 +80,16 @@ func listenInterrupt(quit chan struct{}) {
 }
 
 // gracefullShutdown method used to close all synchronizer processes
-func gracefullShutdown(cronMap map[string]*cron.Cron, js *storage.Job) {
+
+func gracefullShutdown(m *providermanager.M) {
 	// stop all cronjob tickers
-	for _, c := range cronMap {
-		c.Stop()
+	for id := range m.CronMap {
+		m.Stop(id)
 	}
 
 	// close database connection
-	err := js.Stop()
+	err := m.Jobstorage.Stop()
+
 	if err != nil {
 		log.Println(err)
 	}
