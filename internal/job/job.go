@@ -14,6 +14,7 @@ type Job struct {
 	Network      string         `json:"network"`
 	Address      string         `json:"address"`
 	Abi          string         `json:"abi"`
+	Client       string         `json:"client"`
 	Type         string         `json:"type"`
 	Cronjob      string         `json:"cronjob,omitempty"`
 	CheckMethod  *string        `json:"checkMethod"`
