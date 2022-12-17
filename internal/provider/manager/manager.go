@@ -23,7 +23,6 @@ type Implementation interface {
 type Manager interface {
 	Setup(job *job.Job) error
 	Start(id string)
-	Stop(id string)
 	StartCurrentJobs()
 }
 

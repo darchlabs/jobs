@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/robfig/cron"
 )
 
 func main() {
@@ -64,7 +65,7 @@ func main() {
 	listenInterrupt(quit)
 	<-quit
 	gracefullShutdown(m)
-}
+
 
 // listenInterrupt method used to listen SIGTERM OS Signal
 func listenInterrupt(quit chan struct{}) {
@@ -79,6 +80,7 @@ func listenInterrupt(quit chan struct{}) {
 }
 
 // gracefullShutdown method used to close all synchronizer processes
+
 func gracefullShutdown(m *providermanager.M) {
 	// stop all cronjob tickers
 	for id := range m.CronMap {
@@ -87,6 +89,7 @@ func gracefullShutdown(m *providermanager.M) {
 
 	// close database connection
 	err := m.Jobstorage.Stop()
+
 	if err != nil {
 		log.Println(err)
 	}

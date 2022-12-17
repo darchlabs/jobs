@@ -173,6 +173,7 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 			}
 			fmt.Printf("Tx performed on %s network!: %s/n", job.Network, tx.Hash())
 
+
 			firstExec = false
 		}
 	})
@@ -203,6 +204,7 @@ func stopJobOnError(job *job.Job, log string, stop chan bool, s *storage.Job) {
 func updateJob(s *storage.Job, j *job.Job, errorLog string) {
 	// Update the status of the job on the storage
 	j.Status = provider.StatusError
+
 
 	// Update the logs field with the error msg
 	j.Logs = &errorLog

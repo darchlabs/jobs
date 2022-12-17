@@ -68,6 +68,7 @@ func (CreateJobsHandler) Invoke(ctx Context) *api.HandlerRes {
 	body.Job.CreatedAt = time.Now()
 	body.Job.Status = provider.StatusRunning
 
+
 	// Insert job in jobstorage DB
 	j, err := ctx.JobStorage.Insert(body.Job)
 	if err != nil {
