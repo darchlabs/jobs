@@ -2,6 +2,7 @@ package jobsapi
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/darchlabs/jobs/internal/api"
 	"github.com/darchlabs/jobs/internal/provider"
@@ -39,6 +40,7 @@ func (StopJobHandler) Invoke(ctx Context) *api.HandlerRes {
 	ctx.Manager.Stop(job.ID)
 
 	job.Status = provider.StatusStopped
+	job.UpdatedAt = time.Now()
 
 	job, err = ctx.JobStorage.Update(job)
 	if err != nil {
