@@ -171,7 +171,7 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 				stopJobOnError(job, log, stop, cj.jobstorage)
 				return
 			}
-			fmt.Println("Tx performed!: ", tx.Hash())
+			fmt.Printf("Tx performed on %s network!: %s/n", job.Network, tx.Hash())
 
 			firstExec = false
 		}
