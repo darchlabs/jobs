@@ -12,7 +12,6 @@ import (
 	"github.com/darchlabs/jobs/internal/config"
 	providermanager "github.com/darchlabs/jobs/internal/provider/manager"
 	"github.com/darchlabs/jobs/internal/storage"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -35,13 +34,9 @@ func main() {
 
 	// Instance job's storage and client
 	js := storage.NewJob(s)
-	client, err := ethclient.Dial(conf.NodeURL)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// Initialize manager with its params
-	m := providermanager.NewManager(js, client, conf.PrivateKey)
+	m := providermanager.NewManager(js, conf.PrivateKey)
 
 	// Initialize fiber
 	api := fiber.New()
