@@ -56,13 +56,13 @@ func (m *M) StartCurrentJobs() {
 	}
 
 	for _, job := range currentJobs {
-		if job.Status != provider.StatusRunning {
-			continue
-		}
-
 		err := m.Setup(job)
 		if err != nil {
 			fmt.Printf("Error while setting up %s job\n", job.ID)
+			continue
+		}
+
+		if job.Status != provider.StatusRunning {
 			continue
 		}
 
