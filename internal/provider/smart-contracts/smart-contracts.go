@@ -1,10 +1,14 @@
-package providermanager
+package smartcontracts
 
 import (
+	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -44,4 +48,42 @@ func Perform(contract *bind.BoundContract, client *ethclient.Client, address str
 	}
 
 	return tx, nil
+}
+
+func GetSigner(pk string, client ethclient.Client, chainId int64, gasPrice *int64, gasLimit *uint64) (*bind.TransactOpts, error) {
+	// parse private key to ECDSA
+	privateKey, err := crypto.HexToECDSA(pk)
+	if err != nil {
+		return nil, err
+	}
+
+	// set gas price param
+	var gp *big.Int
+	if gasPrice != nil {
+		gp = big.NewInt(*gasPrice)
+	} else {
+		// get recommended gas price
+		gp, err = client.SuggestGasPrice(context.Background())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// set gas limit param (in units)
+	var gl uint64
+	if gasLimit != nil {
+		gl = *gasLimit
+	} else {
+		gl = uint64(300000)
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(int64(chainId)))
+	if err != nil {
+		return nil, err
+	}
+
+	auth.GasPrice = gp
+	auth.GasLimit = gl
+
+	return auth, nil
 }

@@ -16,4 +16,5 @@ type Job struct {
 	ActionMethod string    `json:"actionMethod"`
 	CreatedAt    time.Time `json:"createdAt,omitempty"`
 	UpdatedAt    time.Time `json:"updatedAt,omitempty"`
+	Logs         *string   `json:"logs,omitempty"`
 }

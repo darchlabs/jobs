@@ -20,66 +20,95 @@ type Implementation interface {
 
 // Manager interface
 type Manager interface {
-	Create(job *job.Job) error
+	Setup(job *job.Job) error
+	Start(id string)
+	StartCurrentJobs()
 }
 
 // Manager stuct
 type M struct {
-	jobstorage *storage.Job
+	Jobstorage *storage.Job
 	client     *ethclient.Client
 	privateKey string
+	CronMap    map[string]*cron.Cron
 }
 
 func NewManager(js *storage.Job, client *ethclient.Client, pk string) *M {
-	// get jobs from db
-	currentJobs, err := js.List()
-	if err != nil {
-		// Used log fatal 'cause returning a nil could produce unexpected behaviours
-		log.Fatal("cannot get current jobs in the storage")
-	}
-
+	cronMap := make(map[string]*cron.Cron)
 	m := &M{
-		jobstorage: js,
+		Jobstorage: js,
 		client:     client,
 		privateKey: pk,
-	}
-
-	// Iterate jobs and create them for if there were jobs running, sthing failed and is needed to be reloaded
-	for _, job := range currentJobs {
-		m.Create(job)
+		CronMap:    cronMap,
 	}
 
 	return m
 }
 
-// Method for creating a new manager provider
-func (m *M) Create(job *job.Job) error {
-	var err error
+func (m *M) StartCurrentJobs() {
+	// get jobs from db
+	currentJobs, err := m.Jobstorage.List()
+	if err != nil {
+		// Used log fatal 'cause returning a nil could produce unexpected behaviours
+		log.Fatal("cannot get current jobs in the storage")
+	}
 
+	setupAllJobs(m, currentJobs)
+
+	startAllJobs(m.CronMap)
+}
+
+// Method for creating a new manager provider
+func (m *M) Setup(job *job.Job) error {
 	if job.Type != "cronjob" && job.Type != "synchronizer" {
 		return fmt.Errorf("invalid '%s' job type", job.Type)
 	}
 
+	newCron := cron.New()
+
 	// Cronjob based keeper implementation
 	if job.Type == "cronjob" {
-		cron := cron.New()
-		cronjob := NewCronjob(m, cron)
+		cronjob := NewCronjob(m, newCron)
+		m.CronMap[job.ID] = newCron
 
-		// TODO(nb): Implement goroutine here?
-		err = cronjob.SetupAndRun(job)
+		// Check if the inputs for the cron are right
+		cronCTX, err := cronjob.Check(job)
 		if err != nil {
 			return err
 		}
 
-		return nil
+		// Add job to the cron
+		stop := make(chan bool)
+		err = cronjob.AddJob(job, cronCTX, stop)
+		if err != nil {
+			return err
+		}
 	}
-
-	// Synchronizer based keeper implementation
-	sync := NewSynchronizer()
-	err = sync.SetupAndRun(job)
-	if err != nil {
-		return err
-	}
-
 	return nil
+}
+
+func (m *M) Start(id string) {
+	c := m.CronMap[id]
+	fmt.Println("Starting cron: ", id)
+	c.Start()
+	fmt.Println("Cron started!", id)
+}
+
+func setupAllJobs(m *M, jobs []*job.Job) {
+	// Iterate jobs and Setup them for if there were jobs running, sthing failed and is needed to be reloaded
+	for _, job := range jobs {
+		fmt.Println(job.ID)
+		err := m.Setup(job)
+		if err != nil {
+			log.Fatalf("Error while starting '%s' job", job.ID)
+		}
+	}
+}
+
+func startAllJobs(cronMap map[string]*cron.Cron) {
+	for id, c := range cronMap {
+		fmt.Println("starting: ", id)
+		c.Start()
+		fmt.Println("started! ", id)
+	}
 }
