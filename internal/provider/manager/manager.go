@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ethereum/go-ethereum/ethclient"
-
 	"github.com/darchlabs/jobs/internal/job"
 	"github.com/darchlabs/jobs/internal/provider"
 	"github.com/darchlabs/jobs/internal/storage"
@@ -30,16 +28,14 @@ type Manager interface {
 // Manager stuct
 type M struct {
 	Jobstorage *storage.Job
-	client     *ethclient.Client
 	privateKey string
 	CronMap    map[string]*cron.Cron
 }
 
-func NewManager(js *storage.Job, client *ethclient.Client, pk string) *M {
+func NewManager(js *storage.Job, pk string) *M {
 	cronMap := make(map[string]*cron.Cron)
 	m := &M{
 		Jobstorage: js,
-		client:     client,
 		privateKey: pk,
 		CronMap:    cronMap,
 	}
