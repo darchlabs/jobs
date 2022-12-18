@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/robfig/cron"
 )
 
 func main() {
@@ -65,7 +64,7 @@ func main() {
 	listenInterrupt(quit)
 	<-quit
 	gracefullShutdown(m)
-
+}
 
 // listenInterrupt method used to listen SIGTERM OS Signal
 func listenInterrupt(quit chan struct{}) {

@@ -24,6 +24,7 @@ type Manager interface {
 	Setup(job *job.Job) error
 	Start(id string)
 	StartCurrentJobs()
+	Stop(id string)
 }
 
 // Manager stuct
