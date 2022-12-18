@@ -19,14 +19,12 @@ import (
 type Cronjob struct {
 	cron       *cron.Cron
 	jobstorage *storage.Job
-	pk         string
 }
 
 func NewCronjob(ctx *M, cron *cron.Cron) *Cronjob {
 	return &Cronjob{
 		cron:       cron,
 		jobstorage: ctx.Jobstorage,
-		pk:         ctx.privateKey,
 	}
 }
 
@@ -54,13 +52,13 @@ func (cj *Cronjob) Check(job *job.Job) (*cronCTX, error) {
 	}
 	fmt.Println("Network obtained!")
 
-	client, err := ethclient.Dial(job.Client)
+	client, err := ethclient.Dial(job.NodeURL)
 	if err != nil {
 		return nil, err
 	}
 
 	fmt.Println("Getting signer...")
-	signer, err = sc.GetSigner(cj.pk, *client, chainId, nil, nil)
+	signer, err = sc.GetSigner(job.Privatekey, *client, chainId, nil, nil)
 	if err != nil {
 		return nil, err
 	}

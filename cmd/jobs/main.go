@@ -36,7 +36,7 @@ func main() {
 	js := storage.NewJob(s)
 
 	// Initialize manager with its params
-	m := providermanager.NewManager(js, conf.PrivateKey)
+	m := providermanager.NewManager(js)
 
 	// Initialize fiber
 	api := fiber.New()

@@ -28,15 +28,13 @@ type Manager interface {
 // Manager stuct
 type M struct {
 	Jobstorage *storage.Job
-	privateKey string
 	CronMap    map[string]*cron.Cron
 }
 
-func NewManager(js *storage.Job, pk string) *M {
+func NewManager(js *storage.Job) *M {
 	cronMap := make(map[string]*cron.Cron)
 	m := &M{
 		Jobstorage: js,
-		privateKey: pk,
 		CronMap:    cronMap,
 	}
 
