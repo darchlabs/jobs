@@ -133,6 +133,7 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 	err = cj.cron.AddFunc(job.Cronjob, func() {
 		/* actionMethod check */
 
+		// TODO(nb): handle when the client dies, update error and log
 		// if j.CheckMethod is nil, avoid this check
 		if job.CheckMethod != nil {
 			// Check if the response of the smart contract view function for the cronjob to know if it must perform actionMethod or not
@@ -176,7 +177,7 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 				stopJobOnError(job, log, stop, cj.jobstorage)
 				return
 			}
-			fmt.Printf("Tx performed on %s network!: %s/n", job.Network, tx.Hash())
+			fmt.Printf("Tx performed on %s network!: %s \n", job.Network, tx.Hash())
 
 			firstExec = false
 		}
