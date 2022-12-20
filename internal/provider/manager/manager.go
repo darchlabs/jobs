@@ -67,35 +67,42 @@ func (m *M) StartCurrentJobs() {
 
 // Method for creating a new manager provider
 func (m *M) Setup(job *job.Job) error {
+	// Save the current cron, for if the new one fails to comeback to it
 	currentCron := m.CronMap[job.ID]
-	newCron := cron.New()
 
+	// Create new cron and cronjob instances
+	newCron := cron.New()
 	cronjob := NewCronjob(m, newCron)
+
+	// Update cron map instance with new cron
 	m.CronMap[job.ID] = newCron
 
 	// Check if the inputs for the cron are right
 	cronCTX, err := cronjob.Check(job)
 	if err != nil {
-		// Update job in DB if it is already created
+		fmt.Println("err while checking job: ", err)
+
+		// The cronjob will keep being the currentCron, not the new one
+		m.CronMap[job.ID] = currentCron
+
+		// Get job in DB for knowing if it's already created
 		job, dbErr := m.Jobstorage.GetById(job.ID)
 		if dbErr != nil {
 			fmt.Println("dbErr: ", dbErr)
-			m.CronMap[job.ID] = currentCron
-			return dbErr
+			// If it is not created, it won't update
+			return err
 		}
 
+		// The error is used as log
 		log := err.Error()
 		job.Logs = &log
 
+		// It updates the log field to the job in the db
 		_, updateErr := m.Jobstorage.Update(job)
 		if updateErr != nil {
 			fmt.Println("updateErr: ", updateErr)
-			m.CronMap[job.ID] = currentCron
-			return updateErr
 		}
 
-		fmt.Println(err)
-		m.CronMap[job.ID] = currentCron
 		return err
 	}
 
@@ -111,6 +118,7 @@ func (m *M) Setup(job *job.Job) error {
 }
 
 func (m *M) Start(id string) {
+	// Get the cron instance of that job id
 	c := m.CronMap[id]
 
 	fmt.Println("Starting cron: ", id)
@@ -120,6 +128,7 @@ func (m *M) Start(id string) {
 }
 
 func (m *M) Stop(id string) {
+	// Get the cron instance of that job id
 	c := m.CronMap[id]
 
 	fmt.Println("Stopping cron: ", id)
