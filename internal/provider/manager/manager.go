@@ -29,13 +29,16 @@ type Manager interface {
 type M struct {
 	Jobstorage *storage.Job
 	CronMap    map[string]*cron.Cron
+	ChanMap    map[string]chan bool
 }
 
 func NewManager(js *storage.Job) *M {
 	cronMap := make(map[string]*cron.Cron)
+	stopChan := make(map[string]chan bool)
 	m := &M{
 		Jobstorage: js,
 		CronMap:    cronMap,
+		ChanMap:    stopChan,
 	}
 
 	return m
@@ -82,6 +85,10 @@ func (m *M) Setup(job *job.Job) error {
 	if err != nil {
 		fmt.Println("err while checking job: ", err)
 
+		if currentCron == nil {
+			return err
+		}
+
 		// The cronjob will keep being the currentCron, not the new one
 		m.CronMap[job.ID] = currentCron
 
@@ -114,23 +121,53 @@ func (m *M) Setup(job *job.Job) error {
 		return err
 	}
 
+	m.ChanMap[job.ID] = stop
 	return nil
 }
 
 func (m *M) Start(id string) {
 	// Get the cron instance of that job id
-	c := m.CronMap[id]
+	cron := m.CronMap[id]
 
 	fmt.Println("Starting cron: ", id)
 	// It'll wait the cronjob period to pass before starting the 1st job
-	c.Start()
+	cron.Start()
 	fmt.Println("Cron started!")
+
+	go m.listenStop(id)
+}
+
+// method that listens the cronjob for stopping it if needed
+func (m *M) listenStop(id string) {
+	fmt.Println("listenStop")
+	job, err := m.Jobstorage.GetById(id)
+	if err != nil {
+		fmt.Println("err while getting the job: ", err)
+	}
+
+	// Define cron and stop channel
+	cron := m.CronMap[job.ID]
+	stop := m.ChanMap[job.ID]
+
+	stopSignal := <-stop
+	if stopSignal {
+		fmt.Println("Stopping because of stop signal...")
+		cron.Stop()
+	}
+
+	// Update status to stopped
+	job.Status = provider.StatusStopped
+	_, err = m.Jobstorage.Update(job)
+	if err != nil {
+		fmt.Println("err while updating to error: ", err)
+	}
+
 }
 
 func (m *M) Stop(id string) {
 	// Get the cron instance of that job id
-	c := m.CronMap[id]
+	cron := m.CronMap[id]
 
 	fmt.Println("Stopping cron: ", id)
-	c.Stop()
+	cron.Stop()
 }

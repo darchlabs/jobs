@@ -120,12 +120,13 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 	// define log for making the errors more explicit
 	var log string
 	var err error
+	var errCounter uint8
+
+	// Set max times that the cron func can fail before being stopped
+	maxErrorsLimit := uint8(5)
 
 	// define variable for the cronjob to know if it must perform or not the job
 	perform := true
-
-	// If it is the first execution and fails, it is not necessary to update in the db since the job wasn't inserted
-	firstExec := true
 
 	// Create the cronjob func
 	err = cj.cron.AddFunc(job.Cronjob, func() {
@@ -138,14 +139,27 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 			fmt.Println("Checking method...")
 			res, err := sc.Call(ctx.contract, ctx.client, job.Address, *job.CheckMethod, &bind.CallOpts{})
 			if err != nil {
+				errCounter += 1
+				fmt.Println("errCounter: ", errCounter)
+
 				log = fmt.Sprintf("Error while trying to call checkMethod: %v", err)
 
-				if !firstExec {
-					stopJobOnError(job, log, stop, nil)
+				if errCounter > maxErrorsLimit {
+					fmt.Println("here")
+					stopLog := fmt.Sprintf("Failed 3 times so stopped job. Last error: %s", log)
+					updateJob(cj.jobstorage, job, stopLog)
+
+					stop <- true
 					return
 				}
 
-				stopJobOnError(job, log, stop, cj.jobstorage)
+				// Check if the job still doesn't exist, it doesn't need an update
+				_, err := cj.jobstorage.GetById(job.ID)
+				if err != nil {
+					return
+				}
+
+				updateJob(cj.jobstorage, job, log)
 				return
 			}
 			fmt.Println("Check method response: ", *res)
@@ -165,19 +179,30 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 			}, nil)
 
 			if err != nil {
+				errCounter += 1
+				fmt.Println("errCounter: ", errCounter)
+
 				log = fmt.Sprintf("Error while trying to make the tx on performMethod: %v", err)
 
-				if !firstExec {
-					stopJobOnError(job, log, stop, nil)
+				if errCounter > maxErrorsLimit {
+					fmt.Println("here")
+					stopLog := fmt.Sprintf("Failed 3 times so stopped job. Last error: %s", log)
+					updateJob(cj.jobstorage, job, stopLog)
+					stop <- true
+				}
+
+				// Check if the job still doesn't exist, it doesn't need an update
+				_, err := cj.jobstorage.GetById(job.ID)
+				if err != nil {
 					return
 				}
 
-				stopJobOnError(job, log, stop, cj.jobstorage)
+				updateJob(cj.jobstorage, job, log)
 				return
 			}
+			// If it succed, the error counter comes back to zero
+			errCounter = 0
 			fmt.Printf("Tx performed on %s network!: %s \n", job.Network, tx.Hash())
-
-			firstExec = false
 		}
 	})
 
@@ -191,16 +216,6 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 // TODO(nb): Implement a function that gets and returns the state of the service
 func GetState(id string) (state provider.State) {
 	return provider.StatusRunning
-}
-
-func stopJobOnError(job *job.Job, log string, stop chan bool, s *storage.Job) {
-	// Is the storage is passed as param, it means that an update in it is needed
-	if s != nil {
-		updateJob(s, job, log)
-	}
-
-	failed := true
-	stop <- failed
 }
 
 // Method for stopping cronjob when an error is occurred
