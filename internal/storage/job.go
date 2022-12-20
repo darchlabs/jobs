@@ -87,6 +87,15 @@ func (j *Job) Update(job *job.Job) (*job.Job, error) {
 	return job, nil
 }
 
+func (j *Job) Delete(id string) error {
+	err := j.storage.DB.Delete([]byte(id), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (j *Job) Stop() error {
 	return j.storage.DB.Close()
 }
