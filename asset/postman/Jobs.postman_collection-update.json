@@ -56,7 +56,7 @@
 			"response": []
 		},
 		{
-			"name": "Create Jobs",
+			"name": "Create Job",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -151,6 +151,41 @@
 						"v1",
 						"jobs",
 						"stop"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Job",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\"network\": \"eth-mainnet\",\n\"nodeUrl\": \"...\"\n\"privateKey:: \"131312313...\"\n\"address: \"0x1234...\",\n\"cronjob\": \"*/10 * * * *\",\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs/gCl9pB5VR/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs",
+						"gCl9pB5VR",
+						""
 					]
 				}
 			},
