@@ -5,208 +5,132 @@ package providermanager
 import (
 	"fmt"
 	"log"
-	"strings"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-
-	jobsabi "github.com/darchlabs/jobs/abi"
 	"github.com/darchlabs/jobs/internal/job"
+	"github.com/darchlabs/jobs/internal/provider"
 	"github.com/darchlabs/jobs/internal/storage"
 	"github.com/robfig/cron"
 )
 
+// Interface for each manager provider implementation
+type Implementation interface {
+	SetupAndRun(job *job.Job) error
+}
+
+// Manager interface
 type Manager interface {
-	Create(j *job.Job) error
+	Setup(job *job.Job) error
+	Start(id string)
+	Stop(id string)
+	StartCurrentJobs()
 }
 
+// Manager stuct
 type M struct {
-	jobstorage *storage.Job
-	cron       *cron.Cron
-	client     *ethclient.Client
-	privateKey string
+	Jobstorage *storage.Job
+	CronMap    map[string]*cron.Cron
 }
 
-func NewManager(js *storage.Job, client *ethclient.Client, pk string) *M {
-	// get jobs from db
-	currentJobs, err := js.List()
-	if err != nil {
-		// Used log fatal 'cause returning a nil could produce unexpected behaviours
-		log.Fatal("cannot get current jobs in the storage")
-	}
-
+func NewManager(js *storage.Job) *M {
+	cronMap := make(map[string]*cron.Cron)
 	m := &M{
-		jobstorage: js,
-		cron:       cron.New(),
-		client:     client,
-		privateKey: pk,
-	}
-
-	// Iterate jobs and create them for if there were jobs running, sthing failed and is needed to be reloaded
-	for _, job := range currentJobs {
-		m.Create(job)
+		Jobstorage: js,
+		CronMap:    cronMap,
 	}
 
 	return m
 }
 
-// TODO(nb): Move to another file
-// Method for calling the smart contract view function with bool return
-func (m *M) Call(opts *bind.CallOpts, contract *bind.BoundContract, j *job.Job) (*bool, error) {
-	var out []interface{}
-
-	abiConn, err := jobsabi.NewAbi(common.HexToAddress(j.Address), m.client)
-
-	fmt.Println(1)
-	abiTwo := jobsabi.AbiRaw{Contract: abiConn}
-	m.checkAndStop(err, j)
-
-	fmt.Println(2)
-	err = abiTwo.Call(opts, &out, *j.CheckMethod)
+func (m *M) StartCurrentJobs() {
+	// get jobs from db
+	currentJobs, err := m.Jobstorage.List()
 	if err != nil {
-		return nil, err
+		// Used log fatal 'cause returning a nil could produce unexpected behaviours
+		log.Fatal("cannot get current jobs in the storage")
 	}
 
-	fmt.Println(3)
-	fmt.Println("out: ", out)
-	out0 := out[0].(bool)
-	fmt.Println("out0: ", out0)
+	// TODO(nb): add gorotuines to each loop iteration for making it fast?
+	for _, job := range currentJobs {
+		err := m.Setup(job)
+		if err != nil {
+			fmt.Printf("Error while setting up %s job\n", job.ID)
+			continue
+		}
 
-	return &out0, err
+		if job.Status != provider.StatusRunning {
+			continue
+		}
+
+		m.Start(job.ID)
+	}
 }
 
-func (m *M) Create(j *job.Job) error {
-	var err error
+// Method for creating a new manager provider
+func (m *M) Setup(job *job.Job) error {
+	// Save the current cron, for if the new one fails to comeback to it
+	currentCron := m.CronMap[job.ID]
 
-	if j.Type != "cronjob" && j.Type != "synchronizer" {
-		return fmt.Errorf("invalid '%s' job type", j.Type)
-	}
+	// Create new cron and cronjob instances
+	newCron := cron.New()
+	cronjob := NewCronjob(m, newCron)
 
-	if j.Type == "cronjob" {
-		fmt.Println("Yes")
-		err = m.createCronjob(j)
+	// Update cron map instance with new cron
+	m.CronMap[job.ID] = newCron
+
+	// Check if the inputs for the cron are right
+	cronCTX, err := cronjob.Check(job)
+	if err != nil {
+		fmt.Println("err while checking job: ", err)
+
+		// The cronjob will keep being the currentCron, not the new one
+		m.CronMap[job.ID] = currentCron
+
+		// Get job in DB for knowing if it's already created
+		job, dbErr := m.Jobstorage.GetById(job.ID)
+		if dbErr != nil {
+			fmt.Println("dbErr: ", dbErr)
+			// If it is not created, it won't update
+			return err
+		}
+
+		// The error is used as log
+		log := err.Error()
+		job.Logs = &log
+
+		// It updates the log field to the job in the db
+		_, updateErr := m.Jobstorage.Update(job)
+		if updateErr != nil {
+			fmt.Println("updateErr: ", updateErr)
+		}
+
 		return err
 	}
 
-	err = m.createSynchronizer(j)
-	return err
-}
-
-func (m *M) createCronjob(j *job.Job) error {
-	fmt.Println("Entered")
-	err := m.cron.AddFunc(j.Cronjob, func() {
-		execute := true
-		fmt.Println(execute)
-
-		fmt.Println("I'm here!")
-
-		// Get blockchain id
-		fmt.Println("Getting network..")
-		chainId := getChainId(j.Network)
-		if chainId == int64(0) {
-			err := fmt.Errorf("invalid chain id for %s network", j.Network)
-			m.checkAndStop(err, j)
-		}
-		fmt.Println("chainId: ", chainId)
-
-		fmt.Println("Getting signer...")
-		// Get signer for then execute the tx and evaluate it
-		signer, err := getSigner(m.privateKey, *m.client, chainId, nil, nil)
-		m.checkAndStop(err, j)
-		fmt.Println("signer.From: ", signer.From)
-
-		// Parse address
-		address := common.HexToAddress(j.Address)
-		fmt.Println("address: ", address)
-
-		// Get an instance of the smart contract
-		fmt.Println("client: ", m.client)
-
-		// TODO(nb): Import ca sync abi parser
-
-		abiFormatted := "[{\"inputs\":[],\"name\":\"counter\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatus\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"perform\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"status\",\"type\":\"bool\"}],\"name\":\"setStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-
-		parsedAbi, err := abi.JSON(strings.NewReader(abiFormatted))
-		m.checkAndStop(err, j)
-
-		fmt.Println("parsedAbi.Methods", parsedAbi.Methods)
-		fmt.Println("Getting contract...")
-		contract := GetContract(j.Address, parsedAbi, m.client)
-		m.checkAndStop(err, j)
-
-		actionMethod := fmt.Sprintf("%s", parsedAbi.Methods[j.ActionMethod])
-		if actionMethod == "" {
-			err = fmt.Errorf("there is no %s method inside the contract abi", actionMethod)
-			m.checkAndStop(err, j)
-		}
-
-		// check if j.CheckMethod is nil. If it is nil execute action methdo directly.
-		if j.CheckMethod != nil {
-			checkMethod := fmt.Sprintf("%s", parsedAbi.Methods[*j.CheckMethod])
-			if checkMethod == "" {
-				err = fmt.Errorf("there is no %s method inside the contract abi", checkMethod)
-				m.checkAndStop(err, j)
-			}
-			fmt.Println("checkMethod: ", checkMethod)
-
-			fmt.Println("Checking method...")
-			res, err := m.Call(&bind.CallOpts{}, contract, j)
-			m.checkAndStop(err, j)
-
-			execute = *res
-		}
-
-		fmt.Println("execute: ", execute)
-		fmt.Println("err: ", err)
-
-		// Execute action method and see return
-		if execute && err == nil {
-			fmt.Println("1")
-			// TODO(nb): Create method for doing a tx on the method
-			// var params interface{}
-			// tx, err := contract.contractTransactor.Transact(&bind.TransactOpts{From: signer.From, Signer: signer.Signer}, j.ActionMethod, nil)
-			m.checkAndStop(err, j)
-
-			// fmt.Println("tx: ", tx)
-		}
-	})
-
+	// Add job to the cron
+	stop := make(chan bool)
+	err = cronjob.AddJob(job, cronCTX, stop)
 	if err != nil {
+		m.CronMap[job.ID] = currentCron
 		return err
 	}
 
-	fmt.Println("Starting cron ...")
-	m.cron.Start()
+	return nil
+}
+
+func (m *M) Start(id string) {
+	// Get the cron instance of that job id
+	c := m.CronMap[id]
+
+	fmt.Println("Starting cron: ", id)
+	// It'll wait the cronjob period to pass before starting the 1st job
+	c.Start()
 	fmt.Println("Cron started!")
-
-	fmt.Println("Retorning nil...")
-	return nil
 }
 
-// Method for stopping cronjob when an error is occurred
-func (m *M) checkAndStop(err error, j *job.Job) {
-	if err != nil {
-		fmt.Println("err: ", err)
-		fmt.Println("Updating job...")
-		j.Status = "error"
-		m.jobstorage.Update(j)
-		fmt.Println("Job updated!")
+func (m *M) Stop(id string) {
+	// Get the cron instance of that job id
+	c := m.CronMap[id]
 
-		fmt.Println("Stopping cron ...")
-
-		// For stopping cronjob only on that time
-		// m.cron.ErrorLog.Fatalf("Cron log err: %v", err)
-
-		// For stopping cron on the following times too, it'll need a restart
-		m.cron.Stop()
-		fmt.Println("Cron stopped!")
-	}
-}
-
-// TODO(nb): V2 create syncrhronizer code for listening to an event
-// Implementation when a listener over events is needed (synchronizer) --> Jobs V2
-func (m *M) createSynchronizer(j *job.Job) error {
-	return nil
+	fmt.Println("Stopping cron: ", id)
+	c.Stop()
 }

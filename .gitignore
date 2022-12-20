@@ -2,4 +2,4 @@
 bin
 *.db
 opt
-abi.json
+abi/
