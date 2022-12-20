@@ -115,6 +115,7 @@ func (UpdateJobHandler) Invoke(ctx Context) *api.HandlerRes {
 
 	fmt.Println("Updating...")
 	job.UpdatedAt = time.Now()
+	job.Status = provider.StatusRunning
 	job, err = ctx.JobStorage.Update(job)
 	if err != nil {
 		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
