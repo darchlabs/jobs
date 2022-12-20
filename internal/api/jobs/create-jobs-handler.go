@@ -25,7 +25,7 @@ func NewCreateJobsHandler(js *storage.Job) *CreateJobsHandler {
 }
 
 func (CreateJobsHandler) Invoke(ctx Context) *api.HandlerRes {
-	// Prepare body request struct
+	// Prepare body request struct. This is the top level struct that the validator'll use
 	body := struct {
 		Job *job.Job `json:"job"`
 	}{}
@@ -63,6 +63,9 @@ func (CreateJobsHandler) Invoke(ctx Context) *api.HandlerRes {
 		}
 		ctx.Manager.Start(id)
 
+	} else {
+		err = fmt.Errorf("only 'cronjob' type is supported now, but received '%s' type", err)
+		return &api.HandlerRes{Payload: err.Error(), HttpStatus: 500, Err: err}
 	}
 
 	body.Job.CreatedAt = time.Now()
