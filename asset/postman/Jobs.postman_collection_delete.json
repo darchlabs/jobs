@@ -1,0 +1,223 @@
+{
+	"info": {
+		"_postman_id": "39581828-1b88-44f3-812b-e574d76ef48e",
+		"name": "Jobs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24172998"
+	},
+	"item": [
+		{
+			"name": "Get Providers",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs/providers",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs",
+						"providers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Jobs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Job",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"job\": {\n        \"name\": \"job-1\",\n        \"providerId\": \"2\",\n        \"network\": \"goerli\",\n        \"address\": \"0x98f25ABE7FAeFE5bFbDB02F745D76Ce6661523fe\",\n        \"abi\": \"[\\n\\t\\t\\t{\\n\\t\\t\\t\\t\\\"inputs\\\": [],\\n\\t\\t\\t\\t\\\"name\\\": \\\"counter\\\",\\n\\t\\t\\t\\t\\\"outputs\\\": [\\n\\t\\t\\t\\t\\t{\\n\\t\\t\\t\\t\\t\\t\\\"internalType\\\": \\\"uint8\\\",\\n\\t\\t\\t\\t\\t\\t\\\"name\\\": \\\"\\\",\\n\\t\\t\\t\\t\\t\\t\\\"type\\\": \\\"uint8\\\"\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t],\\n\\t\\t\\t\\t\\\"stateMutability\\\": \\\"view\\\",\\n\\t\\t\\t\\t\\\"type\\\": \\\"function\\\"\\n\\t\\t\\t},\\n\\t\\t\\t{\\n\\t\\t\\t\\t\\\"inputs\\\": [],\\n\\t\\t\\t\\t\\\"name\\\": \\\"getStatus\\\",\\n\\t\\t\\t\\t\\\"outputs\\\": [\\n\\t\\t\\t\\t\\t{\\n\\t\\t\\t\\t\\t\\t\\\"internalType\\\": \\\"bool\\\",\\n\\t\\t\\t\\t\\t\\t\\\"name\\\": \\\"\\\",\\n\\t\\t\\t\\t\\t\\t\\\"type\\\": \\\"bool\\\"\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t],\\n\\t\\t\\t\\t\\\"stateMutability\\\": \\\"view\\\",\\n\\t\\t\\t\\t\\\"type\\\": \\\"function\\\"\\n\\t\\t\\t},\\n\\t\\t\\t{\\n\\t\\t\\t\\t\\\"inputs\\\": [],\\n\\t\\t\\t\\t\\\"name\\\": \\\"perform\\\",\\n\\t\\t\\t\\t\\\"outputs\\\": [],\\n\\t\\t\\t\\t\\\"stateMutability\\\": \\\"nonpayable\\\",\\n\\t\\t\\t\\t\\\"type\\\": \\\"function\\\"\\n\\t\\t\\t},\\n\\t\\t\\t{\\n\\t\\t\\t\\t\\\"inputs\\\": [\\n\\t\\t\\t\\t\\t{\\n\\t\\t\\t\\t\\t\\t\\\"internalType\\\": \\\"bool\\\",\\n\\t\\t\\t\\t\\t\\t\\\"name\\\": \\\"status\\\",\\n\\t\\t\\t\\t\\t\\t\\\"type\\\": \\\"bool\\\"\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t],\\n\\t\\t\\t\\t\\\"name\\\": \\\"setStatus\\\",\\n\\t\\t\\t\\t\\\"outputs\\\": [],\\n\\t\\t\\t\\t\\\"stateMutability\\\": \\\"nonpayable\\\",\\n\\t\\t\\t\\t\\\"type\\\": \\\"function\\\"\\n\\t\\t\\t}\\n\\t\\t]\",\n        \"nodeUrl\": \"https://eth-goerli.g.alchemy.com/v2/q3tyr_tpgkSQnjt4YUUIE4lBLwSAO_Cv\",\n        \"privateKey\": \"f5d4b19c9904d78297bee9510e2cd79ab52d36294962749504ffd7fb4b7565cb\",\n        \n        \"type\": \"cronjob\",\n        \"cronjob\": \"*/10 * * * *\",\n        \"checkMethod\": \"getStatus\",\n        \"actionMethod\": \"perform\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Stop Job",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs/N3O7dwc4R/stop",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs",
+						"N3O7dwc4R",
+						"stop"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Start Job",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"id\": \"EIPNlSc4g\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs/N3O7dwc4R/start",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs",
+						"N3O7dwc4R",
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Job",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"job\": {\n\"network\": \"\",\n\"nodeUrl\": \"\",\n\"privateKey\": \"\",\n\"address\": \"\",\n\"cronjob\": \"*/20 * * * *\"\n}}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs/qs3zOQ5VR/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs",
+						"qs3zOQ5VR",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Job",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:3000/api/v1/jobs/qs3zOQ5VR/delete",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"jobs",
+						"qs3zOQ5VR",
+						"delete"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

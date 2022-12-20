@@ -8,7 +8,7 @@ import (
 )
 
 type Context struct {
-	JobStorage storage.Job
+	JobStorage *storage.Job
 	Manager    providermanager.Manager
 	c          *fiber.Ctx
 }
@@ -19,9 +19,17 @@ type handler func(ctx Context) *api.HandlerRes
 func Route(app *fiber.App, ctx Context) {
 	listJobsHandler := NewListJobsHandler(ctx.JobStorage)
 	createJobsHandler := NewCreateJobsHandler(ctx.JobStorage)
+	stopJobHandler := NewStopJobHandler(ctx.JobStorage)
+	startJobHandler := NewStartJobHandler(ctx.JobStorage)
+	updateJobHandler := NewUpdateJobHandler(ctx.JobStorage)
+	deleteJobHandler := NewDeleteJobHandler(ctx.JobStorage)
 
 	app.Get("/api/v1/jobs", HandleFunc(listJobsHandler.Invoke, ctx))
 	app.Post("/api/v1/jobs", HandleFunc(createJobsHandler.Invoke, ctx))
+	app.Post("/api/v1/jobs/:id/stop", HandleFunc(stopJobHandler.Invoke, ctx))
+	app.Post("/api/v1/jobs/:id/start", HandleFunc(startJobHandler.Invoke, ctx))
+	app.Patch("/api/v1/jobs/:id", HandleFunc(updateJobHandler.Invoke, ctx))
+	app.Post("/api/v1/jobs/:id/delete", HandleFunc(deleteJobHandler.Invoke, ctx))
 }
 
 // Func that receives the returns from handlers and creates an http response
@@ -36,7 +44,8 @@ func HandleFunc(fn handler, ctx Context) func(c *fiber.Ctx) error {
 		payload, statusCode, err := handlerRes.Payload, handlerRes.HttpStatus, handlerRes.Err
 		if err != nil {
 			return c.Status(fiber.StatusConflict).JSON(api.Response{
-				// TODO(nb): This returns an empty error
+				Data:  payload,
+				Meta:  statusCode,
 				Error: err,
 			})
 		}

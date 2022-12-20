@@ -25,6 +25,8 @@ func HandleFunc(fn handler) func(c *fiber.Ctx) error {
 		payload, statusCode, err := handlerRes.Payload, handlerRes.HttpStatus, handlerRes.Err
 		if err != nil {
 			return c.Status(fiber.StatusConflict).JSON(api.Response{
+				Data:  payload,
+				Meta:  statusCode,
 				Error: err,
 			})
 		}

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/darchlabs/jobs/internal/job"
-	"github.com/teris-io/shortid"
 )
 
 type Job struct {
@@ -41,45 +40,62 @@ func (j *Job) List() ([]*job.Job, error) {
 	return data, nil
 }
 
-func (j *Job) Insert(jobInput *job.Job) (*job.Job, error) {
-	// generate id for database
-	id, err := shortid.Generate()
+func (j *Job) GetById(id string) (*job.Job, error) {
+	data, err := j.storage.DB.Get([]byte(id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	jobInput.ID = id
-	jobInput.CreatedAt = time.Now()
-	// TODO(nb): Create a state struct or pattern available for this field
-	jobInput.Status = "idle"
-
-	b, err := json.Marshal(jobInput)
+	var job *job.Job
+	err = json.Unmarshal(data, &job)
 	if err != nil {
 		return nil, err
 	}
 
-	// save in database
-	err = j.storage.DB.Put([]byte(id), b, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return jobInput, nil
+	return job, nil
 }
 
-func (j *Job) Update(jobInput *job.Job) (*job.Job, error) {
-	jobInput.UpdatedAt = time.Now()
-
-	b, err := json.Marshal(jobInput)
+func (j *Job) Insert(job *job.Job) (*job.Job, error) {
+	b, err := json.Marshal(job)
 	if err != nil {
 		return nil, err
 	}
 
 	// save in database
-	err = j.storage.DB.Put([]byte(jobInput.ID), b, nil)
+	err = j.storage.DB.Put([]byte(job.ID), b, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return jobInput, nil
+	return job, nil
+}
+
+func (j *Job) Update(job *job.Job) (*job.Job, error) {
+	job.UpdatedAt = time.Now()
+
+	b, err := json.Marshal(job)
+	if err != nil {
+		return nil, err
+	}
+
+	// save in database
+	err = j.storage.DB.Put([]byte(job.ID), b, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return job, nil
+}
+
+func (j *Job) Delete(id string) error {
+	err := j.storage.DB.Delete([]byte(id), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (j *Job) Stop() error {
+	return j.storage.DB.Close()
 }
