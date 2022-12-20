@@ -49,6 +49,7 @@ func (m *M) StartCurrentJobs() {
 		log.Fatal("cannot get current jobs in the storage")
 	}
 
+	// TODO(nb): add gorotuines to each loop iteration for making it fast?
 	for _, job := range currentJobs {
 		err := m.Setup(job)
 		if err != nil {
@@ -70,6 +71,7 @@ func (m *M) Setup(job *job.Job) error {
 		return fmt.Errorf("invalid '%s' job type", job.Type)
 	}
 
+	currentCron := m.CronMap[job.ID]
 	newCron := cron.New()
 
 	// Cronjob based keeper implementation
@@ -80,6 +82,26 @@ func (m *M) Setup(job *job.Job) error {
 		// Check if the inputs for the cron are right
 		cronCTX, err := cronjob.Check(job)
 		if err != nil {
+			// Update job in DB if it is already created
+			job, dbErr := m.Jobstorage.GetById(job.ID)
+			if dbErr != nil {
+				fmt.Println("dbErr: ", dbErr)
+				m.CronMap[job.ID] = currentCron
+				return dbErr
+			}
+
+			log := err.Error()
+			job.Logs = &log
+
+			_, updateErr := m.Jobstorage.Update(job)
+			if updateErr != nil {
+				fmt.Println("updateErr: ", updateErr)
+				m.CronMap[job.ID] = currentCron
+				return updateErr
+			}
+
+			fmt.Println(err)
+			m.CronMap[job.ID] = currentCron
 			return err
 		}
 
@@ -87,6 +109,7 @@ func (m *M) Setup(job *job.Job) error {
 		stop := make(chan bool)
 		err = cronjob.AddJob(job, cronCTX, stop)
 		if err != nil {
+			m.CronMap[job.ID] = currentCron
 			return err
 		}
 	}
@@ -97,6 +120,7 @@ func (m *M) Start(id string) {
 	c := m.CronMap[id]
 
 	fmt.Println("Starting cron: ", id)
+	// It'll wait the cronjob period to pass before starting the 1st job
 	c.Start()
 	fmt.Println("Cron started!")
 }
@@ -106,5 +130,4 @@ func (m *M) Stop(id string) {
 
 	fmt.Println("Stopping cron: ", id)
 	c.Stop()
-	fmt.Println("Cron stopped!")
 }
