@@ -67,52 +67,46 @@ func (m *M) StartCurrentJobs() {
 
 // Method for creating a new manager provider
 func (m *M) Setup(job *job.Job) error {
-	if job.Type != "cronjob" && job.Type != "synchronizer" {
-		return fmt.Errorf("invalid '%s' job type", job.Type)
-	}
-
 	currentCron := m.CronMap[job.ID]
 	newCron := cron.New()
 
-	// Cronjob based keeper implementation
-	if job.Type == "cronjob" {
-		cronjob := NewCronjob(m, newCron)
-		m.CronMap[job.ID] = newCron
+	cronjob := NewCronjob(m, newCron)
+	m.CronMap[job.ID] = newCron
 
-		// Check if the inputs for the cron are right
-		cronCTX, err := cronjob.Check(job)
-		if err != nil {
-			// Update job in DB if it is already created
-			job, dbErr := m.Jobstorage.GetById(job.ID)
-			if dbErr != nil {
-				fmt.Println("dbErr: ", dbErr)
-				m.CronMap[job.ID] = currentCron
-				return dbErr
-			}
-
-			log := err.Error()
-			job.Logs = &log
-
-			_, updateErr := m.Jobstorage.Update(job)
-			if updateErr != nil {
-				fmt.Println("updateErr: ", updateErr)
-				m.CronMap[job.ID] = currentCron
-				return updateErr
-			}
-
-			fmt.Println(err)
+	// Check if the inputs for the cron are right
+	cronCTX, err := cronjob.Check(job)
+	if err != nil {
+		// Update job in DB if it is already created
+		job, dbErr := m.Jobstorage.GetById(job.ID)
+		if dbErr != nil {
+			fmt.Println("dbErr: ", dbErr)
 			m.CronMap[job.ID] = currentCron
-			return err
+			return dbErr
 		}
 
-		// Add job to the cron
-		stop := make(chan bool)
-		err = cronjob.AddJob(job, cronCTX, stop)
-		if err != nil {
+		log := err.Error()
+		job.Logs = &log
+
+		_, updateErr := m.Jobstorage.Update(job)
+		if updateErr != nil {
+			fmt.Println("updateErr: ", updateErr)
 			m.CronMap[job.ID] = currentCron
-			return err
+			return updateErr
 		}
+
+		fmt.Println(err)
+		m.CronMap[job.ID] = currentCron
+		return err
 	}
+
+	// Add job to the cron
+	stop := make(chan bool)
+	err = cronjob.AddJob(job, cronCTX, stop)
+	if err != nil {
+		m.CronMap[job.ID] = currentCron
+		return err
+	}
+
 	return nil
 }
 
