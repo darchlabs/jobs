@@ -102,7 +102,7 @@ func (m *M) Setup(job *job.Job) error {
 
 		// The error is used as log
 		log := err.Error()
-		job.Logs = &log
+		job.Logs = append(job.Logs, log)
 
 		// It updates the log field to the job in the db
 		_, updateErr := m.Jobstorage.Update(job)
@@ -139,27 +139,25 @@ func (m *M) Start(id string) {
 
 // method that listens the cronjob for stopping it if needed
 func (m *M) listenStop(id string) {
-	fmt.Println("listenStop")
-	job, err := m.Jobstorage.GetById(id)
-	if err != nil {
-		fmt.Println("err while getting the job: ", err)
-	}
-
 	// Define cron and stop channel
-	cron := m.CronMap[job.ID]
-	stop := m.ChanMap[job.ID]
+	cron := m.CronMap[id]
+	stop := m.ChanMap[id]
 
 	stopSignal := <-stop
 	if stopSignal {
+		job, err := m.Jobstorage.GetById(id)
+		if err != nil {
+			fmt.Println("err while getting the job: ", err)
+		}
 		fmt.Println("Stopping because of stop signal...")
 		cron.Stop()
-	}
 
-	// Update status to stopped
-	job.Status = provider.StatusStopped
-	_, err = m.Jobstorage.Update(job)
-	if err != nil {
-		fmt.Println("err while updating to error: ", err)
+		// Update status to stopped
+		job.Status = provider.StatusAutoStopped
+		_, err = m.Jobstorage.Update(job)
+		if err != nil {
+			fmt.Println("err while updating to error: ", err)
+		}
 	}
 
 }

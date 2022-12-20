@@ -224,7 +224,7 @@ func updateJob(s *storage.Job, j *job.Job, errorLog string) {
 	j.Status = provider.StatusError
 
 	// Update the logs field with the error msg
-	j.Logs = &errorLog
+	j.Logs = append(j.Logs, errorLog)
 
 	fmt.Println("Updating job...")
 	s.Update(j)

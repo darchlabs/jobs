@@ -27,10 +27,9 @@ type Config struct {
 type State string
 
 const (
-	StatusIdle     State = "idle"
-	StatusStarting State = "starting"
-	StatusRunning  State = "running"
-	StatusStopping State = "stopping"
-	StatusStopped  State = "stopped"
-	StatusError    State = "error"
+	StatusIdle        State = "idle"
+	StatusRunning     State = "running"
+	StatusStopped     State = "stopped"
+	StatusError       State = "error"
+	StatusAutoStopped State = "autoStopped"
 )
