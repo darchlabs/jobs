@@ -132,7 +132,6 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 	err = cj.cron.AddFunc(job.Cronjob, func() {
 		/* actionMethod check */
 
-		// TODO(nb): handle when the client dies, update error and log
 		// if j.CheckMethod is nil, avoid this check
 		if job.CheckMethod != nil {
 			// Check if the response of the smart contract view function for the cronjob to know if it must perform actionMethod or not
@@ -145,7 +144,6 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 				log = fmt.Sprintf("Error while trying to call checkMethod: %v", err)
 
 				if errCounter > maxErrorsLimit {
-					fmt.Println("here")
 					stopLog := fmt.Sprintf("Failed 3 times so stopped job. Last error: %s", log)
 					updateJob(cj.jobstorage, job, stopLog)
 
@@ -185,10 +183,11 @@ func (cj *Cronjob) AddJob(job *job.Job, ctx *cronCTX, stop chan bool) error {
 				log = fmt.Sprintf("Error while trying to make the tx on performMethod: %v", err)
 
 				if errCounter > maxErrorsLimit {
-					fmt.Println("here")
 					stopLog := fmt.Sprintf("Failed 3 times so stopped job. Last error: %s", log)
 					updateJob(cj.jobstorage, job, stopLog)
+
 					stop <- true
+					return
 				}
 
 				// Check if the job still doesn't exist, it doesn't need an update

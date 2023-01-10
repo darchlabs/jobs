@@ -139,8 +139,7 @@ func (m *M) Start(id string) {
 
 // method that listens the cronjob for stopping it if needed
 func (m *M) listenStop(id string) {
-	// Define cron and stop channel
-	cron := m.CronMap[id]
+	// Define the cron stop channel
 	stop := m.ChanMap[id]
 
 	stopSignal := <-stop
@@ -150,7 +149,7 @@ func (m *M) listenStop(id string) {
 			fmt.Println("err while getting the job: ", err)
 		}
 		fmt.Println("Stopping because of stop signal...")
-		cron.Stop()
+		m.Stop(id)
 
 		// Update status to stopped
 		job.Status = provider.StatusAutoStopped
